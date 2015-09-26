@@ -383,7 +383,6 @@ inter_frailty <- function(data_set, L, R, delta, cov_theta, cov_beta, M, b=0.001
 
   # List of outputs
   alphaList <- list(par = alpha, mcov = VAR, mcov.cura = VAR[1:(1+length(cov_theta)),1:(1+length(cov_theta))], StopC = cPar)
-  print(alphaList)
 
   return(alphaList)
 }
