@@ -4,6 +4,7 @@
 # devtools::use_package("MASS")
 # devtools::use_package("stats4")
 # devtools::use_package("Matrix")
+# devtools::use_package("plyr")
 
 
 # Generates a vector of n latent variables ksi
@@ -97,7 +98,7 @@ F_y_cond_effect <- function(tempo, l, r, i, j, theta, beta, gamma, cov_theta, co
 }
 
 inverse = function (f, lower = 0.1, upper = 100) {
-  function (y) uniroot((function (x) f(x) - y), lower = lower, upper = upper)[1]
+  function (y) stats::uniroot((function (x) f(x) - y), lower = lower, upper = upper)[1]
 }
 
 #Generates a vector of n observations using the previous function
@@ -242,9 +243,11 @@ inter_frailty_cl <- function(data_set, L, R, delta, cov_theta, cov_beta, grp, M,
 
   #Iterative process (with parallel computing)
   while(!conv | n <= burn_in) {
+    cat("ITER#", (n + 1))
+    tempoITER <- system.time({
     if(!is.null(par_cl)){
       list_reg <- foreach(iterators::icount(M), .packages=c("MASS","MLEcens","Matrix","survival","stats4","plyr"), .export=c("surv_lam","inverse_lam_f","S_cl_i","inverse","F_y_cond_effect", "gera_yh_effect","gera_ksih_effect", "gera_kh_effect","log_vero_gamma", "gera_uh"), .inorder=F) %dopar% {
-        a_M <- mvrnorm(n=1, alpha, sigma_alpha)
+        a_M <- MASS::mvrnorm(n=1, alpha, sigma_alpha)
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):(compr_alpha - 1)]
         gamma_M <- a_M[compr_alpha]
@@ -275,7 +278,7 @@ inter_frailty_cl <- function(data_set, L, R, delta, cov_theta, cov_beta, grp, M,
       }
     } else {
       list_reg <- foreach(iterators::icount(M), .packages=c("MASS","MLEcens","Matrix","survival","stats4","plyr"), .export=c("surv_lam","inverse_lam_f","S_cl_i","inverse","F_y_cond_effect", "gera_yh_effect","gera_ksih_effect", "gera_kh_effect","log_vero_gamma", "gera_uh"), .inorder=F) %do% {
-        a_M <- mvrnorm(n=1, alpha, sigma_alpha)
+        a_M <- MASS::mvrnorm(n=1, alpha, sigma_alpha)
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):(compr_alpha - 1)]
         gamma_M <- a_M[compr_alpha]
@@ -355,8 +358,6 @@ inter_frailty_cl <- function(data_set, L, R, delta, cov_theta, cov_beta, grp, M,
 
     #New vector of estimates
     alpha_new <- Matrix::colMeans(a_M_NEW)
-    cat("")
-    cat("Alpha NEW:", alpha_new)
 
 
     #Checking convergence
@@ -364,6 +365,8 @@ inter_frailty_cl <- function(data_set, L, R, delta, cov_theta, cov_beta, grp, M,
 
     #Setting new alpha as old one for iteractive process
     alpha <- alpha_new
+    })
+    print(tempoITER)
 
     #Writing alpha values
     if (outputFiles) {
