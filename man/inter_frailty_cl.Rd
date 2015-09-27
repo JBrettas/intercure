@@ -5,7 +5,8 @@
 \title{Cure frailty model for interval censored clustered data.}
 \usage{
 inter_frailty_cl(data_set, L, R, delta, cov_theta, cov_beta, grp, M,
-  b = 0.001, N_INT_MAX = 100, par_cl = NULL, burn_in = 50)
+  b = 0.001, N_INT_MAX = 100, par_cl = NULL, burn_in = 50,
+  outputFiles = FALSE)
 }
 \arguments{
 \item{data_set}{Dataset used to fit the model.}

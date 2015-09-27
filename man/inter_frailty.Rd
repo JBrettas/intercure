@@ -5,7 +5,7 @@
 \title{Fits cure rate frailty model for interval censored data.}
 \usage{
 inter_frailty(data_set, L, R, delta, cov_theta, cov_beta, M, b = 0.001,
-  N_INT_MAX = 100, NAME_DIF = "", par_cl = NULL, burn_in = 30)
+  N_INT_MAX = 100, par_cl = NULL, burn_in = 30, outputFiles = FALSE)
 }
 \arguments{
 \item{data_set}{Dataset used to fit the model.}

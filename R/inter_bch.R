@@ -2,7 +2,6 @@ library(ICE)
 library(MASS)
 library(interval)
 library(Matrix)
-library(dplyr)
 library(compiler)
 enableJIT(3)
 
@@ -21,7 +20,7 @@ create_sr <- function(L,R){
     m<<-m
     s0<-(-Inf)
     sm1<-c(s0,s)
-    sm1<<-sm1[-length(sm1)] 
+    sm1<<-sm1[-length(sm1)]
 }
 
 # Alternative function using Aintmap below
@@ -42,16 +41,16 @@ create_sr <- function(L,R){
 #   m<<-m
 #   s0<-(-Inf)
 #   sm1<-c(s0,s)
-#   sm1<<-sm1[-length(sm1)]  
+#   sm1<<-sm1[-length(sm1)]
 # }
 
 # Computes the X matrix for the k-th iteraction, proposed by Shen and Hao
 compute_Xk<-function(theta,vector_prob,dados,L,R,covariates,F_hat){
-  
+
   # Matrix with Intercepts
   Z=(data.frame(1,dados[,covariates]))
   colnames(Z)=c("intercept",covariates)
-  
+
   # Evaluating gamma defined by Shen
   Xk=exp(-exp(theta%*%t(Z))%x%sapply(s[1:m],F_hat))
   Xk=Xk*(1-exp(-exp(theta%*%t(Z))%x%vector_prob))
@@ -85,7 +84,7 @@ log_lik<-function(theta=(1:(1+length(covariates)))*0,vector_prob=rep.int(1/m,m),
   soma_2<-sum((diag(log(1-exp(-vector_prob%*%t(l)))%*%(Xk[,1:m]))))
   soma_3<-as.numeric(-Xk[,(m+1)]%*%l)
   soma_lvero=as.numeric(soma_1+soma_2+soma_3)
-  return(soma_lvero)  
+  return(soma_lvero)
 }
 
 
@@ -154,35 +153,35 @@ max_p<-function(p,theta,Xk,eps2=0.001,MAXITER=500,Sigma){
   CRIT1=FALSE
   CRIT2=FALSE
   it=1
-  
+
   # First and Second order derivatives
   dfp<-d_fp(p,theta,Xk,C,Z)
   ddfp<-dd_fp(p,theta,Xk,C,Z)
-  
+
   # Defining initial tau
   ini_tau<-1/p
   tau<-ini_tau
-  
+
   # Initial v
   v<-0.1
-  
+
   while(( !CRIT1 | !CRIT2 )&it<=MAXITER){
     # Defining eta
     eta<-Sigma/mean(tau*p)
-    
+
     # New v (used on delta_v)
     new_v<-v_plus(p,tau,dfp,ddfp,Sigma)
-    
+
     # Delta_p
     delp<-delta_p(p,tau,new_v,dfp,ddfp,Sigma)
-    
+
     # tau_p
     tau_plus<-new_v-ddfp*delp-dfp
-    
+
     # Delta_tau, Delta_v
     deltau<-tau_plus-tau
     delv<-new_v-v
-    
+
     # Backtracking
     psi<-backtracking(p,delp,tau,deltau,v,delv,theta,Xk,C,Sigma)
     p=as.vector(p+psi*delp)
@@ -190,7 +189,7 @@ max_p<-function(p,theta,Xk,eps2=0.001,MAXITER=500,Sigma){
     v=as.vector(v+psi*delv)
     dfp<-d_fp(p,theta,Xk,C,Z)
     ddfp<-dd_fp(p,theta,Xk,C,Z)
-    
+
     # Updating convergence parameters
     CRIT1<-(sum(p*tau)<eps2)
     CRIT2<-(sqrt(sum((dfp+tau-v)*(dfp+tau-v)))<eps2)
@@ -226,7 +225,7 @@ Sim_BCH<-function(N,alpha,beta){
       if(L[i]>=3){
         L[i]=3
       }
-      
+
     }
   }
   dados<-data.frame(Times,L,R,z)
@@ -240,84 +239,84 @@ sh_reg<-function(dados,L,R,covariates,Sigma=20,crit_theta=0.001,crit_p=0.005,n_i
   est_file_name<-paste(OUTPUT_FILE,".txt",     sep="")
   var_file_name<-paste(OUTPUT_VAR_FILE,".txt", sep="")
   fileConn<-file(est_file_name,"w")
-  
+
   # Specifying the covariates
   dados<-as.data.frame(dados)
   Z=data.frame(1,dados[,covariates])
   colnames(Z)=c("intercept",covariates)
   Z<<-Z
-  
+
   # Defining global variables s, r, m and sm1
   create_sr(L,R)
-  
+
   # Initial vector of probabilities (Turnbull "jumps")
   prob<-1/m #Uniform on first iteraction
   p<-rep.int(prob,m)
-  
+
   # F initial estimator
   F_hat_aux<-data.frame(r[1:m],cumsum(p))
   colnames(F_hat_aux)<-c("time","cum")
   F_hat<-stepfun(F_hat_aux$time,c(0,F_hat_aux$cum))
-  
+
   # Initial theta
   theta_k=c(1:ncol(Z))*0
-  
+
   # Convergence flags
   CONV=FALSE
   CONV2=FALSE
-  
+
   # Iteration counter
   it=1
-  
+
   # ECM Loop
   while(!CONV | !CONV2){
     # Timing loop
     tic <- proc.time()
-    
+
     # Computing matrix X and C
     cat("\nIT #",it)
     cat("\nComputing Xk")
     Xk<-compute_Xk(theta_k,p,dados,L,R,covariates,F_hat)
     cat("\nComputing C")
     C<-compute_C(Xk)
-    
+
     # Obtaining theta and it's variance with MLE
     llk<-function(theta) log_lik(theta,p,dados,Xk,C,covariates,F_hat)
     fit_theta<-optim(theta_k,llk,method = "BFGS",control=list(fnscale=-1),hessian=T)
     theta_knew<-fit_theta$par
     theta_var<-solve(-fit_theta$hessian)
     write.table(theta_var, file=var_file_name, row.names=FALSE, col.names=FALSE)
-    
+
     # Checking theta convergence
     CONV=(max(abs(theta_knew-theta_k))<crit_theta)
     cat("\nTheta Max Difference:",max(abs(theta_knew-theta_k)))
     cat("\nTHETA:", theta_knew)
-    
+
     # Updating Xk for new theta
     Xk<-compute_Xk(theta_knew,p,dados,L,R,covariates,F_hat)
-    
+
     # Computing p vector for new Xk and theta
     novo_p<-max_p(p,theta_knew,Xk,Sigma=Sigma)
-    
+
     # Checking p convergence
     CONV2=(max(abs(novo_p-p))<crit_p)
     cat("\np Max Difference:",max(abs(novo_p-p)))
     cat("\n")
-    
+
     # Updating parameters
     p=novo_p
     F_hat_aux<-data.frame(r[1:m],cumsum(p))
     colnames(F_hat_aux)<-c("time","cum")
     F_hat<-stepfun(F_hat_aux$time,c(0,F_hat_aux$cum))
     theta_k=theta_knew
-    
+
     # Writing new estimates on file
     write(as.vector(theta_k),file=fileConn,append=T,sep=" ")
-    
+
     # Shows iteration time
     cat("\n it time:",(proc.time()-tic))
     it=it+1
-    
+
     # Check if reached iteration limit defined by user
     if(it>=n_int) {
       write("WARNING: CONVERGENCE NOT REACHED",file=fileConn,append=T,sep=" ")
@@ -326,13 +325,13 @@ sh_reg<-function(dados,L,R,covariates,Sigma=20,crit_theta=0.001,crit_p=0.005,n_i
     }
   }
   close(fileConn)
-  
+
   # Check if reached the it limit
   cPar<-as.numeric(it>=n_int)
-  
+
   # Remove global aux variables
   rm(Z,m,r,s,sm1, pos = ".GlobalEnv")
-  
+
   # Outputs an list with useful metrics
   return(list("par"=theta_k,"p"=p,"mcov"=theta_var,"StopC"=cPar))
 }

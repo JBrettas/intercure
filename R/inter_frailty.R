@@ -3,6 +3,7 @@
 # devtools::use_package("survival")
 # devtools::use_package("MASS")
 # devtools::use_package("Matrix")
+# devtools::use_testthat()
 
 # Fast search for interval containing x
 findInterval2 <- function(x,v) {
