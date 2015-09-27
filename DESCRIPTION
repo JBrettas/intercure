@@ -11,3 +11,9 @@ Description: Implementations of proposed cure rate estimators for interval censo
     For the mixutre and frailty models, there are also implementations contemplating clustered data.
 License: What license is it under?
 LazyData: TRUE
+Imports: foreach,
+    snow,
+    survival,
+    MASS,
+    stats4,
+    Matrix
