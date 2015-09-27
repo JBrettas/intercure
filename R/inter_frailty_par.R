@@ -1,10 +1,13 @@
+library(doSNOW)
+library(foreach)
+library(Rmpfr)
 library(MASS)
 library(Matrix)
+library(MLEcens)
 library(survival)
-library(compiler)
-#library(Rcpp)
-#sourceCpp("survCpp.cpp")
-
+library(numDeriv)
+library(snow)
+library(dplyr)
 
 #' Generates a dataset using frailty cure rate model.
 #'
@@ -94,27 +97,29 @@ findInterval2 <- function(x,v) {
   return (j)
 }
 
+
 #Creates a table with time and respective Nelson-Aalen estimates for Cum. Hazard Function
 #including latent variables u_i
-nelson_aalen_table <- function(dataSet, eventTimes, delta, beta, covariates, u){
-  factors <- u * exp(beta %*% t(dataSet[,covariates]))
-  event_times_relev <- unique(sort(eventTimes[delta == 1]))
-  parc_f <- function(t) (sum(eventTimes[delta == 1] == t) / sum(factors[eventTimes >= t]))
-  parcels <- sapply(event_times_relev  , parc_f )
+Nelson_Aalen_Table <- function(dataSet,eventTimes,delta,beta,covariates,u){
+  factors <- u*exp(beta%*%t(dataSet[,covariates]))
+  eventTimes_relev <- unique(sort(eventTimes[delta==1]))
+  parc_f <- function(t) (sum(eventTimes[delta==1]==t)/sum(factors[eventTimes>=t]))
+  parcels <- sapply(eventTimes_relev  , parc_f  )
   cum_haz <- cumsum(parcels)
-  c_haz_f <- data.frame(event_times_relev, cum_haz)
-  colnames(c_haz_f) <- c("time", "hazard")
+  c_haz_f <- data.frame(eventTimes_relev,cum_haz)
+  colnames(c_haz_f) <- c("time","hazard")
   return(c_haz_f)
 }
 
-# Array with piecewise Nelson-Aalen estimator
-aux_naalen<-function(tempos, naalen_f){
+#Auxiliar function to Nelson-Aalen estimates table
+aux_naalen <- function(tempos, naalen_f, cl=NULL) {
   z <- unique(sort(tempos))
-  vector_naalen <- sapply(z, naalen_f)
+  vector_naalen <- parSapply(cl, z, naalen_f)
   pieceAalen <- data.frame(z, vector_naalen)
   colnames(pieceAalen) <- c("time", "hazard")
   return(pieceAalen)
 }
+
 
 # Survival Function given x(0) , x(1), Theta, Beta
 # Note: Precision problems may occur on the linear predictors
@@ -153,10 +158,10 @@ gera_yh <- function(data_set, L, R, delta, cov_theta, cov_beta, theta, beta, naa
   Uh <- runif(tam)
   for (i in 1:tam) {
     if ((delta[i] == 0) | (L[i] == R[i])) {new_y[i] <- L[i]}
-      else {
-        xi_0 <- as.numeric(cbind(intercepto, X_theta[i,]))
-        xi_1 <- as.numeric(X_beta[i,])
-        new_y[i] <- inverse_lam_f(Uh[i], L[i], R[i], xi_0, xi_1, theta, beta, naalen_original)
+    else {
+      xi_0 <- as.numeric(cbind(intercepto, X_theta[i,]))
+      xi_1 <- as.numeric(X_beta[i,])
+      new_y[i] <- inverse_lam_f(Uh[i], L[i], R[i], xi_0, xi_1, theta, beta, naalen_original)
     }
   }
   return(new_y)
@@ -186,6 +191,7 @@ gera_uh <- function(y_h, k_h, data_set, R, delta, cov_beta, beta, nelson_aalen_f
   return(u_h)
 }
 
+
 # Returns covariance matrix from (5) of (Lam et al 2007)
 var_matrix <- function(sum_var, alpha_matrix) {
   M <- nrow(alpha_matrix)
@@ -207,8 +213,6 @@ convergencia <- function(alpha_new, alpha_old, tol = 0.001) {
   if (max_error < tol) conv <- TRUE
   return(conv)
 }
-
-
 
 
 #' Fits cure rate frailty model for interval censored data.
@@ -246,143 +250,136 @@ convergencia <- function(alpha_new, alpha_old, tol = 0.001) {
 #' sample_set <- sim_frailty_data(100)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 10)
 inter_frailty <- function(data_set, L, R, delta, cov_theta, cov_beta, M, b=0.001, N_INT_MAX=100, NAME_DIF="", ncores=1, burn_in=30) {
-  # File outputs
-  est_file_name <- paste("LAM_Estimatess", NAME_DIF, ".txt", sep="")
+  # Registering clusters for parallel computing
+  cl <- makeCluster(ncores, type="SOCK")
+  registerDoSNOW(cl)
+  data_set <- tbl_df(data_set)
+
+  # Defining output variables
+  est_file_name <- paste("LAM_Estimates", NAME_DIF, ".txt", sep="")
   var_file_name <- paste("LAM_Variances", NAME_DIF, ".txt", sep="")
   fileConn <- file(est_file_name, "w")
 
-  # Faster dataset
-  data_set <- tbl_df(data_set)
-
-  # Arrays for simulated latent variables
+  # Initial values for y
   y_nxM = k_nxM = u_nxM = matrix(NA, nrow=M, ncol = nrow(data_set))
-  for(i in 1:M) y_nxM[i,] <- ifelse (delta==1, (L + R) / 2, L)
+  for(i in 1:M) y_nxM[i,] <- ifelse(delta == 1, (L + R) / 2, L)
 
-  # Matrix to allocate M parameter vectors
+  # Initial values for the parameters
   compr_theta <- 1 + length(cov_theta); compr_beta <- length(cov_beta)
   compr_alpha <- compr_theta + compr_beta
-  a_M <- matrix(NA,nrow=M,ncol=compr_alpha)
+  a_M <- matrix(NA, nrow=M, ncol=compr_alpha)
   rotulos <- c("intercepto", cov_theta, cov_beta)
   colnames(a_M) <- rotulos
   theta_M <- matrix(a_M[,1:compr_theta], nrow=M)
   colnames(theta_M) <- rotulos[1:compr_theta]
   beta_M <- matrix(a_M[,(compr_theta + 1):compr_alpha], nrow=M)
   colnames(beta_M) <- rotulos[(compr_theta + 1):compr_alpha]
-
-  # Initial set of parameters
   alpha <- c(1:compr_alpha) * 0
-  sigma_alpha <- b * diag(compr_alpha)
-  beta <- alpha[(compr_theta + 1):compr_alpha]
+  sigma_alpha <- b * diag(compr_alpha); beta <- alpha[(compr_theta + 1):compr_alpha]
 
-  # Initial u vector = delta vector
+  # Initial values for latent vector u
   u <- delta
 
-  # Initial cumulative hazard function estimate
-  Vetores_NAalen <- nelson_aalen_table(data_set, y_nxM[1,], delta, beta, cov_beta, u)
-  NAalen_MEDIA <- stepfun(Vetores_NAalen$time, c(0, Vetores_NAalen$hazard))
+  # Initial Nelson-Aalen estimator
+  Vetores_NAalen <- Nelson_Aalen_Table(data_set, y_nxM[1,], delta, beta, cov_beta, u)
+  NAalen_MEDIA <- stepfun(Vetores_NAalen$time, c(0,Vetores_NAalen$hazard))
 
   # Initializing convergence criteria and parameters
-  conv <- FALSE
-  n <- 0
+  conv <- FALSE; n <- 0
   a_M_NEW <- a_M
 
-  # Iterates until convergence or user defined limit for iterations is reached
-  while (!conv | n <= burn_in) {
-    # Set initial sum of variances as 0
+  # Iterative process (with parallel computing)
+  while(!conv | n <= burn_in) {
+    cat("ITER#", (n + 1))
+    tempoITER <- system.time({
+    list_reg = foreach(icount(M), .packages=c("dplyr","MASS","Matrix","survival"), .export=c("surv_lam","inverse_lam_f", "gera_yh", "gera_kh", "gera_uh"), .inorder=F) %dopar% {
+      a_M <- mvrnorm(n=1, alpha, sigma_alpha)
+      theta_M <- a_M[1:compr_theta]; beta_M <- a_M[(compr_theta + 1):compr_alpha]
+      y <- gera_yh(data_set, L, R, delta, cov_theta, cov_beta, as.numeric(theta_M), as.numeric(beta_M), NAalen_MEDIA)
+      k <- gera_kh(y, data_set, delta, cov_theta, cov_beta, theta_M, beta_M, NAalen_MEDIA)
+      u <- gera_uh(y, k, data_set, R, delta, cov_beta, beta_M, NAalen_MEDIA)
+
+      # Poisson Regression for Theta
+      o_set <- k * 0 - log(2)
+      expression_theta <- paste("data_set$", cov_theta[1:length(cov_theta)], sep = "", collapse="+")
+      eq_theta <- paste("fit_theta <- glm(k~", expression_theta, "+offset(o_set),family=poisson)")
+      eval(parse(text = eq_theta))
+
+      # Cox Regression for Beta
+      expression_beta <- paste("data_set$", cov_beta[1:length(cov_beta)] ,sep = "", collapse="+")
+      eq_beta <- paste("fit_beta <- coxph(Surv(y,delta)~", expression_beta," + offset(ifelse(log(u)==-Inf,-200,log(u))),method='breslow')")
+      eval(parse(text = eq_beta))
+
+      # Outputs of Parallel Computing
+      out <- list(fit_theta$coef, vcov(fit_theta), fit_beta$coef, vcov(fit_beta), y, u)
+      out
+    }
+
+    # Allocating M new and auxiliary parameter vectors
     SUM_VAR_THETA = SUM_VAR_BETA = 0
+    for (h in 1:M) {
+      SUM_VAR_THETA = SUM_VAR_THETA + list_reg[[h]][[2]]; SUM_VAR_BETA = SUM_VAR_BETA + list_reg[[h]][[4]]
+      a_M_NEW[h,1:compr_theta] = list_reg[[h]][[1]]
+      a_M_NEW[h,(compr_theta + 1):compr_alpha] = list_reg[[h]][[3]]
+      y_nxM[h,] = list_reg[[h]][[5]]
+      u_nxM[h,] = list_reg[[h]][[6]]
+    }
 
-    # Loop for each h replicate
-    tempoITER <- system.time( {
-      for(h in 1:M) {
-        # Generating h parameter vector
-        a_M[h,] <- mvrnorm(n=1, alpha, sigma_alpha)
-        theta_M[h,] <- a_M[h,1:compr_theta]
-        beta_M[h,] <- a_M[h,(compr_theta + 1):compr_alpha]
+    # Matrix of the M beta vectors
+    beta_M <- matrix(a_M_NEW[,(compr_theta + 1):compr_alpha], nrow=M)
 
-        # Generating h observation vector
-        y_nxM[h,] <- gera_yh(data_set, L, R, delta, cov_theta, cov_beta, as.numeric(theta_M[h,]), as.numeric(beta_M[h,]), NAalen_MEDIA)
+    # Obtaining new Nelson-Aalen estimator for Cum. Hazard function
+    step_list <- foreach(h=1:M, .export="Nelson_Aalen_Table", .inorder=F) %dopar% {
+      V_NAalen <- Nelson_Aalen_Table(data_set, y_nxM[h,], delta, beta_M[h,], cov_beta, u_nxM[h,])
+      step_list <- stepfun(V_NAalen$time, c(0, V_NAalen$hazard))
+      step_list
+    }
+    expression <- paste("step_list[[", 1:M,"]](x)", sep = "", collapse = "+")
+    eq4 <- paste("NAalen_MEDIA <- function(x) (",expression,")/", M)
+    eval(parse(text = eq4))
 
-        # Generating h-th k vector
-        k_nxM[h,] <- gera_kh(y_nxM[h,], data_set, delta, cov_theta, cov_beta, theta_M[h,], beta_M[h,], NAalen_MEDIA)
+    # Creating new times/survival table and a more efficient estimator
+    V_NAalen <- aux_naalen(sort(y_nxM[,delta==1]), NAalen_MEDIA, cl)
+    NAalen_MEDIAnew <- stepfun(V_NAalen$time, c(0, V_NAalen$hazard))
 
-        # Generating h-th u vector
-        u_nxM[h,] <- gera_uh(y_nxM[h,], k_nxM[h,], data_set, R, delta, cov_beta, beta_M[h,], NAalen_MEDIA)
+    #Calculating the new covariance matrix
+    SUM_VAR <- as.matrix(bdiag(list(SUM_VAR_THETA, SUM_VAR_BETA)))
+    VAR <- var_matrix(SUM_VAR, a_M_NEW)
+    sigma_alpha <- VAR
 
-        # Defining offset to construct paper's likelihood
-        o_set <- k_nxM[h,] * 0 - log(2)
-
-        # GLM model for cure rate
-        expression_theta <- paste("data_set$", cov_theta[1:length(cov_theta)] , sep = "",collapse="+")
-        eq_theta <- paste("fit_theta <- glm(k_nxM[h,]~", expression_theta, "+offset(o_set),family=poisson)")
-        eval(parse(text = eq_theta))
-        a_M_NEW[h,1:compr_theta] <- fit_theta$coef
-        SUM_VAR_THETA <- SUM_VAR_THETA + vcov(fit_theta)
-
-        # Cox proportional hazards model for time
-        expression_beta=paste("data_set$", cov_beta[1:length(cov_beta)] , sep = "",collapse="+")
-        eq_beta <- paste("fit_beta <- coxph(Surv(y_nxM[h,],delta)~", expression_beta, " + offset(ifelse(log(u_nxM[h,]) == -Inf,-200,log(u_nxM[h,]))),method='breslow')")
-        eval(parse(text = eq_beta))
-        a_M_NEW[h,(compr_theta + 1):compr_alpha] <- fit_beta$coef
-        SUM_VAR_BETA <- SUM_VAR_BETA + vcov(fit_beta)
-      }
-
-      # Obtaining Nelson-Aalen estimate for each h replica
-      lhs2  <- paste("V",1:M,"_NAalen",     sep="")
-      rhs2  <- paste("nelson_aalen_table(data_set,y_nxM[",1:M,",],delta,beta_M[",1:M,",],cov_beta,u_nxM[",1:M,",])", sep="")
-      eq2   <- paste(paste(lhs2, rhs2, sep="<-"), collapse=";")
-      eval(parse(text = eq2))
-      lhs3  <- paste("NAalen",    1:M,     sep="")
-      rhs3  <- paste("stepfun(V",1:M,"_NAalen$time, c(0,V",1:M, "_NAalen$hazard))", sep="")
-      eq3   <- paste(paste(lhs3, rhs3, sep="<-"), collapse=";")
-      eval(parse(text = eq3))
-
-      # Obtaining mean of functions defined above
-      expression <- paste("NAalen", 1:M,"(x)", sep = "", collapse="+")
-      eq4 <- paste("NAalen_MEDIA <- function(x) (", expression, ")/", M)
-      eval(parse(text = eq4))
-      V_NAalen <- aux_naalen(sort(y_nxM[,delta == 1]), NAalen_MEDIA)
-      NAalen_MEDIAnew <- stepfun(V_NAalen$time, c(0,V_NAalen$hazard))
-
-      # Updating covariance matrix
-      SUM_VAR <- as.matrix(bdiag(list(SUM_VAR_THETA, SUM_VAR_BETA)))
-      VAR <- var_matrix(SUM_VAR, a_M_NEW)
-      sigma_alpha <- VAR
-
-      # New vector of parameters
-      alpha_new <- colMeans(a_M_NEW)
+    #New vector of estimates
+    alpha_new <- colMeans(a_M_NEW)
     })
+    print(tempoITER)
 
-    # Evaluating convergence
+    #Checking convergence
     conv <- convergencia(alpha_new,alpha)
 
-    # Updating vector of parameters
+    #Setting new alpha as old one for iteractive process
     alpha <- alpha_new
 
-    # Inserting new estimates into outputs
-    write(as.vector(alpha),file=fileConn,append=T,sep=" ")
+    #Writing alpha values
+    write(as.vector(alpha), file=fileConn, append=T, sep=" ")
     write.table(VAR, file=var_file_name, row.names=FALSE, col.names=FALSE)
 
-    # Updating actual cumulative hazard estimate
+    #Setting new baseline cum. hazard estimator as old one for iteractive process
     NAalen_MEDIA <- NAalen_MEDIAnew
 
-    # Show and update iterate
-    cat("Finished it ",n)
+    #Updating the iteration counter
     n <- n + 1
 
-    # Checking if iteration counter reached N_INT_MAX
-    if(n==(N_INT_MAX+burn_in)) {
-      write("\n Warning: Iteration Number achieved but convergence criteria not met.",file=fileConn,append=T,sep=" ")
-      close(fileConn)
-      cat("\n Warning: Convergence criteria not met. Estimates given for N_INT_MAX=",N_INT_MAX)
+    #Checking if iteration counter reached N_INT_MAX
+    if (n == (N_INT_MAX + burn_in)) {
+      write("Warning: Iteration Number achieved but convergence criteria not met.", file=fileConn, append=T, sep=" ")
+      cat("Warning: Convergence criteria not met. Estimates given for N_INT_MAX=", N_INT_MAX)
       break
     }
   }
-
-  # Flag indicating iteration limit stop
+  #Kills the parallel proccess
   cPar <- as.numeric(n == (N_INT_MAX + burn_in))
-
-  # List of outputs
-  alphaList <- list(par = alpha, mcov = VAR, mcov.cura = VAR[1:(1+length(cov_theta)),1:(1+length(cov_theta))], StopC = cPar)
-
+  stopCluster(cl)
+  alphaList <- list(par = alpha, mcov = VAR, mcov.cura = VAR[1:(1+length(cov_theta)), 1:(1 + length(cov_theta))], StopC = cPar)
+  close(fileConn)
   return(alphaList)
 }
+
