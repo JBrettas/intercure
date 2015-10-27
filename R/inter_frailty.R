@@ -83,14 +83,14 @@ gera_yh <- function(data_set, L, R, delta, cov_theta, cov_beta, theta, beta, naa
   tam <- length(L)
   new_y <- rep(NA, tam)
   intercepto <- 1
-  X_theta <- data.frame(data_set[,cov_theta])
-  X_beta <- data.frame(data_set[,cov_beta])
+  x_theta <- data.frame(data_set[,cov_theta])
+  x_beta <- data.frame(data_set[,cov_beta])
   Uh <- runif(tam)
   for (i in 1:tam) {
     if ((delta[i] == 0) | (L[i] == R[i])) {new_y[i] <- L[i]}
     else {
-      xi_0 <- as.numeric(cbind(intercepto, X_theta[i,]))
-      xi_1 <- as.numeric(X_beta[i,])
+      xi_0 <- as.numeric(cbind(intercepto, x_theta[i,]))
+      xi_1 <- as.numeric(x_beta[i,])
       new_y[i] <- inverse_lam_f(Uh[i], L[i], R[i], xi_0, xi_1, theta, beta, naalen_original)
     }
   }
@@ -150,7 +150,7 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #' \code{inter_frailty} returns a list with the estimated parameters \code{par}
 #' and their covariance matrix \code{mcov}. The list also contains the cure rate
 #' covariance estimates \code{mcov.cura} for cure rate part only and a dummy
-#' variable \code{StopC} assuming 0 if algorithm converged and 1 if a stop
+#' variable \code{stop_c} assuming 0 if algorithm converged and 1 if a stop
 #' criteria ended the process.
 #'
 #' @param data_set Dataset used to fit the model.
@@ -176,7 +176,7 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #'   parameters.
 #' @return \code{mcov.cura} estimates for the covariance matrix associated with
 #'   the cure rate part.
-#' @return \code{StopC} stop criteria indicator assuming 1 when process is
+#' @return \code{stop_c} stop criteria indicator assuming 1 when process is
 #'   stopped for a non-convergence criteria. Assumes 0 when convergence is
 #'   reached.
 #' @examples
@@ -354,7 +354,7 @@ inter_frailty <- function(data_set, L, R, delta, cov_theta, cov_beta, M, b=0.001
   }
   #Kills the parallel proccess
   cPar <- as.numeric(n == (N_INT_MAX + burn_in))
-  alphaList <- list(par = alpha, mcov = VAR, mcov.cura = VAR[1:(1 + length(cov_theta)), 1:(1 + length(cov_theta))], StopC = cPar)
+  alphaList <- list(par = alpha, mcov = VAR, mcov.cura = VAR[1:(1 + length(cov_theta)), 1:(1 + length(cov_theta))], stop_c = cPar)
   if (outputFiles) close(fileConn)
   return(alphaList)
 }

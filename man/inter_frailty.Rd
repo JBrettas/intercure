@@ -47,7 +47,7 @@ The \code{inter_frailty} function returns an list containing the
 \code{mcov.cura} estimates for the covariance matrix associated with
   the cure rate part.
 
-\code{StopC} stop criteria indicator assuming 1 when process is
+\code{stop_c} stop criteria indicator assuming 1 when process is
   stopped for a non-convergence criteria. Assumes 0 when convergence is
   reached.
 }
@@ -55,7 +55,7 @@ The \code{inter_frailty} function returns an list containing the
 \code{inter_frailty} returns a list with the estimated parameters \code{par}
 and their covariance matrix \code{mcov}. The list also contains the cure rate
 covariance estimates \code{mcov.cura} for cure rate part only and a dummy
-variable \code{StopC} assuming 0 if algorithm converged and 1 if a stop
+variable \code{stop_c} assuming 0 if algorithm converged and 1 if a stop
 criteria ended the process.
 }
 \examples{

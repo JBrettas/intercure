@@ -216,7 +216,7 @@ wreml.logit<-function(y,x,z,b1,v1,sig2,family="logistic",cov_names="") {
     if (max(abs(bb-b0))<0.001) {flag<-1;break}
     else b0 <- bb }
   if(flag) {
-    reslt <- list(b=b,v=v,sig2=sig2,std.b=std.b,se.sig2=se.sig2) }
+    reslt <- list(b=b,v=v,sig2=sig2,std.b=std.b,se.sig2=se.sig2, varB = A[1:p1,1:p1]) }
   else stop("error:not reach the convergence")
 }#end of function
 ###########################################################
@@ -312,6 +312,7 @@ mixture.effect <- function(l,r,cov_theta,cov_beta,cluster,dataset,itmax){
     v <- glb$v
     th2 <- glb$sig2
     se.b <- glb$std.b
+    varB <- glb$varB
     se.th2 <- glb$se.sig2
     mle <- optim(delta0,loglik.effect,gradlik.effect,method="BFGS",hessian=TRUE,alpha=alpha,xl=X_beta, yl=y, cluster=cluster,th1=th1)
     # maximize the BLUP type log-likelihood function to estimate beta,u & gamma
@@ -329,6 +330,7 @@ mixture.effect <- function(l,r,cov_theta,cov_beta,cluster,dataset,itmax){
       flag <- 0
       H <- solve(B) }
     se.beta <-sqrt(diag(H)[1:p_1])
+    varBeta <- H[1:p_1,1:p_1]
     th1 <- as.vector(t(u)%*%u+sum(diag(H)[(p_1+1):(p_1+m)]))/m
     r1 <- sum(diag(H)[(p_1+1):(p_1+m)])/th1
     se.th1 <- sqrt(2*th1^2/(m-2*r1+sum(diag(H)[(p_1+1):(p_1+m)]^2)/th1^2))
@@ -383,7 +385,7 @@ mixture.effect <- function(l,r,cov_theta,cov_beta,cluster,dataset,itmax){
   cat("\n")
   cPar<-as.numeric(iter==itmax)
   return(list(flag=flag, beta=beta, b=b, u=u, v=v, gamma=gamma, th1=th1,
-              th2=th2, se.beta=se.beta, se.b=se.b, se.th1=se.th1, se.th2=se.th2,StopC=cPar))
+              th2=th2, se.beta=se.beta, se.b=se.b, se.th1=se.th1, se.th2=se.th2, varB = varB, varBeta = varBeta, StopC=cPar))
 }#end of function
 #############################################################
 # Some of the outputs obtained from the analysis of #
