@@ -161,7 +161,7 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 }
 
 
-#' Fits cure rate frailty model for interval censored data.
+#' Fits cure rate frailty model for interval censored data
 #'
 #' \code{inter_frailty} returns a list with the estimated parameters \code{par}
 #' and their covariance matrix \code{mcov}. The list also contains the cure rate
@@ -169,9 +169,9 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #' variable \code{stop_c} assuming 0 if algorithm converged and 1 if a stop
 #' criteria ended the process.
 #'
-#' @param data_set Dataset used to fit the model.
-#' @param l_vector Vector containing the last check times before event.
-#' @param r_vector Vector containing the first check times after event.
+#' @param dataset Dataset used to fit the model.
+#' @param left Vector containing the last check times before event.
+#' @param right Vector containing the first check times after event.
 #' @param delta Flag vector indicating failure inside interval.
 #' @param cov_theta String vector containing the column names to be used on the
 #'   cure rate predictor.
@@ -186,22 +186,20 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #'   the program loops are executed sequentially.
 #' @param burn_in Number of burn in iterations.
 #' @return The \code{inter_frailty} function returns an list containing the
-#'   following outputs.
-#' @return \code{par} estimates of theta and beta parameters.
-#' @return \code{mcov} estimates for the covariance matrix of theta and beta
-#'   parameters.
-#' @return \code{mcov.cura} estimates for the covariance matrix associated with
-#'   the cure rate part.
-#' @return \code{stop_c} stop criteria indicator assuming 1 when process is
+#'   following outputs:
+#'   \item{\code{par}}{estimates of theta and beta parameters.}
+#'   \item{\code{mcov}}{estimates for the covariance matrix of theta and beta
+#'   parameters.}
+#'   \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
 #'   stopped for a non-convergence criteria. Assumes 0 when convergence is
-#'   reached.
+#'   reached.}
 #' @examples
 #' sample_set <- sim_frailty_data(100)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 50)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 10)
 #' @export
 #' @import foreach
-inter_frailty <- function(data_set, l_vector, r_vector, delta,
+inter_frailty <- function(dataset, left, right, delta,
                           cov_theta, cov_beta,
                           M, b=0.001, max_n=100, par_cl = NULL,
                           burn_in=30, output_files = FALSE) {
@@ -217,10 +215,10 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
 
 
   # Initial values for y
-  y_nxm <- u_nxm <- matrix(NA, nrow=M, ncol = nrow(data_set))
+  y_nxm <- u_nxm <- matrix(NA, nrow=M, ncol = nrow(dataset))
   for (i in 1:M) y_nxm[i,] <- ifelse (delta == 1,
-                                    (l_vector + r_vector) / 2,
-                                    l_vector)
+                                    (left + right) / 2,
+                                    left)
 
   # Initial values for the parameters
   compr_theta <- 1 + length(cov_theta); compr_beta <- length(cov_beta)
@@ -240,7 +238,7 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
   u <- delta
 
   # Initial Nelson-Aalen estimator
-  Vetores_NAalen <- nelson_aalen_table(data_set, y_nxm[1,],
+  Vetores_NAalen <- nelson_aalen_table(dataset, y_nxm[1,],
                                        delta, beta, cov_beta, u)
   mean_naalen <- stepfun(Vetores_NAalen$time, c(0,Vetores_NAalen$hazard))
 
@@ -250,8 +248,8 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
 
   # Iterative process (with parallel computing)
   while(!conv | n <= burn_in) {
-    cat("ITER#", (n + 1))
-    iter_time <- system.time({
+    if ((n+1)%%10 == 0 ) cat("Iteration:",(n + 1),"\n")
+    #iter_time <- system.time({
     if(!is.null(par_cl)){
       list_reg <- foreach(iterators::icount(M),
                           .packages=c("MASS","Matrix","survival"),
@@ -261,24 +259,24 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
         a_M <- MASS::mvrnorm(n=1, alpha, sigma_alpha)
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):compr_alpha]
-        y <- gera_yh(data_set, l_vector, r_vector, delta,
+        y <- gera_yh(dataset, left, right, delta,
                      cov_theta, cov_beta, as.numeric(theta_M),
                      as.numeric(beta_M), mean_naalen)
-        k <- gera_kh(y, data_set, delta, cov_theta, cov_beta,
+        k <- gera_kh(y, dataset, delta, cov_theta, cov_beta,
                      theta_M, beta_M, mean_naalen)
-        u <- gera_uh(y, k, data_set, r_vector, delta, cov_beta,
+        u <- gera_uh(y, k, dataset, right, delta, cov_beta,
                      beta_M, mean_naalen)
 
         # Poisson Regression for Theta
         o_set <- k * 0 - log(2)
-        expression_theta <- paste("data_set$", cov_theta[1:length(cov_theta)],
+        expression_theta <- paste("dataset$", cov_theta[1:length(cov_theta)],
                                   sep = "", collapse="+")
         eq_theta <- paste("fit_theta <- glm(k~", expression_theta,
                           "+offset(o_set), family=poisson)")
         eval(parse(text = eq_theta))
 
         # Cox Regression for Beta
-        expression_beta <- paste("data_set$", cov_beta[1:length(cov_beta)] ,
+        expression_beta <- paste("dataset$", cov_beta[1:length(cov_beta)] ,
                                  sep = "", collapse="+")
         eq_beta <- paste("fit_beta <- coxph(Surv(y,delta)~",
                          expression_beta," + offset(ifelse(log(u)==-Inf,-200,
@@ -299,25 +297,25 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
         a_M <- MASS::mvrnorm(n=1, alpha, sigma_alpha)
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):compr_alpha]
-        y <- gera_yh(data_set, l_vector, r_vector, delta,
+        y <- gera_yh(dataset, left, right, delta,
                      cov_theta, cov_beta, as.numeric(theta_M),
                      as.numeric(beta_M), mean_naalen)
-        k <- gera_kh(y, data_set, delta,
+        k <- gera_kh(y, dataset, delta,
                      cov_theta, cov_beta,
                      theta_M, beta_M, mean_naalen)
-        u <- gera_uh(y, k, data_set, r_vector, delta,
+        u <- gera_uh(y, k, dataset, right, delta,
                      cov_beta, beta_M, mean_naalen)
 
         # Poisson Regression for Theta
         o_set <- k * 0 - log(2)
-        expression_theta <- paste("data_set$", cov_theta[1:length(cov_theta)],
+        expression_theta <- paste("dataset$", cov_theta[1:length(cov_theta)],
                                   sep = "", collapse="+")
         eq_theta <- paste("fit_theta <- stats::glm(k~", expression_theta,
                           "+offset(o_set),family=poisson)")
         eval(parse(text = eq_theta))
 
         # Cox Regression for Beta
-        expression_beta <- paste("data_set$", cov_beta[1:length(cov_beta)] ,
+        expression_beta <- paste("dataset$", cov_beta[1:length(cov_beta)] ,
                                  sep = "", collapse="+")
         eq_beta <- paste("fit_beta <- survival::coxph(Surv(y,delta)~",
                          expression_beta," + offset(ifelse(log(u)==-Inf,
@@ -351,7 +349,7 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
     if (!is.null(par_cl)) {
       step_list <- foreach(h=1:M, .export="nelson_aalen_table",
                            .inorder=F) %dopar% {
-        V_NAalen <- nelson_aalen_table(data_set, y_nxm[h,],
+        V_NAalen <- nelson_aalen_table(dataset, y_nxm[h,],
                                        delta, beta_M[h,], cov_beta,
                                        u_nxm[h,])
         step_list <- stepfun(V_NAalen$time, c(0, V_NAalen$hazard))
@@ -360,7 +358,7 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
     } else {
       step_list <- foreach(h=1:M, .export="nelson_aalen_table",
                            .inorder=F) %do% {
-        V_NAalen <- nelson_aalen_table(data_set, y_nxm[h,],
+        V_NAalen <- nelson_aalen_table(dataset, y_nxm[h,],
                                        delta, beta_M[h,], cov_beta,
                                        u_nxm[h,])
         step_list <- stepfun(V_NAalen$time, c(0, V_NAalen$hazard))
@@ -383,8 +381,9 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
 
     #New vector of estimates
     alpha_new <- Matrix::colMeans(a_M_NEW)
-    })
-    print(iter_time)
+    #})
+    #print(iter_time)
+
 
     #Checking convergence
     conv <- convergence_lam(alpha_new ,alpha)
@@ -424,8 +423,6 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
   #Kills the parallel proccess
   crit_stop <- as.numeric(n == (max_n + burn_in))
   alpha_list <- list(par = alpha, mcov = cov_matrix,
-                    mcov.cura = cov_matrix[1:(1 + length(cov_theta)),
-                                    1:(1 + length(cov_theta))],
                     stop_c = crit_stop)
   if (output_files) close(fileconn)
   return(alpha_list)

@@ -2,18 +2,17 @@
 % Please edit documentation in R/inter_frailty.R
 \name{inter_frailty}
 \alias{inter_frailty}
-\title{Fits cure rate frailty model for interval censored data.}
+\title{Fits cure rate frailty model for interval censored data}
 \usage{
-inter_frailty(data_set, l_vector, r_vector, delta, cov_theta, cov_beta, M,
-  b = 0.001, max_n = 100, par_cl = NULL, burn_in = 30,
-  output_files = FALSE)
+inter_frailty(dataset, left, right, delta, cov_theta, cov_beta, M, b = 0.001,
+  max_n = 100, par_cl = NULL, burn_in = 30, output_files = FALSE)
 }
 \arguments{
-\item{data_set}{Dataset used to fit the model.}
+\item{dataset}{Dataset used to fit the model.}
 
-\item{l_vector}{Vector containing the last check times before event.}
+\item{left}{Vector containing the last check times before event.}
 
-\item{r_vector}{Vector containing the first check times after event.}
+\item{right}{Vector containing the first check times after event.}
 
 \item{delta}{Flag vector indicating failure inside interval.}
 
@@ -38,19 +37,13 @@ the program loops are executed sequentially.}
 }
 \value{
 The \code{inter_frailty} function returns an list containing the
-  following outputs.
-
-\code{par} estimates of theta and beta parameters.
-
-\code{mcov} estimates for the covariance matrix of theta and beta
-  parameters.
-
-\code{mcov.cura} estimates for the covariance matrix associated with
-  the cure rate part.
-
-\code{stop_c} stop criteria indicator assuming 1 when process is
+  following outputs:
+  \item{\code{par}}{estimates of theta and beta parameters.}
+  \item{\code{mcov}}{estimates for the covariance matrix of theta and beta
+  parameters.}
+  \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
   stopped for a non-convergence criteria. Assumes 0 when convergence is
-  reached.
+  reached.}
 }
 \description{
 \code{inter_frailty} returns a list with the estimated parameters \code{par}
