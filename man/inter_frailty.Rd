@@ -4,15 +4,16 @@
 \alias{inter_frailty}
 \title{Fits cure rate frailty model for interval censored data.}
 \usage{
-inter_frailty(data_set, L, R, delta, cov_theta, cov_beta, M, b = 0.001,
-  N_INT_MAX = 100, par_cl = NULL, burn_in = 30, outputFiles = FALSE)
+inter_frailty(data_set, l_vector, r_vector, delta, cov_theta, cov_beta, M,
+  b = 0.001, max_n = 100, par_cl = NULL, burn_in = 30,
+  output_files = FALSE)
 }
 \arguments{
 \item{data_set}{Dataset used to fit the model.}
 
-\item{L}{Vector containing the last check times before event.}
+\item{l_vector}{Vector containing the last check times before event.}
 
-\item{R}{Vector containing the first check times after event.}
+\item{r_vector}{Vector containing the first check times after event.}
 
 \item{delta}{Flag vector indicating failure inside interval.}
 
@@ -27,7 +28,7 @@ predictor associated with the hazard function.}
 
 \item{b}{Numeric for tolerance of convergence.}
 
-\item{N_INT_MAX}{Maximum number of algorithm's iterations without the burn
+\item{max_n}{Maximum number of algorithm's iterations without the burn
 in.}
 
 \item{par_cl}{Registered SOCK cluster for parallel process. If NULL (default)

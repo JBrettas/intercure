@@ -121,10 +121,10 @@ gera_kh <- function(y_h, data_set, delta,
 }
 
 # Generates latent variables u for n observations
-gera_uh <- function(y_h, k_h, data_set, R, delta,
+gera_uh <- function(y_h, k_h, data_set, r_vector, delta,
                     cov_beta, beta, nelson_aalen_f) {
   u_h <- y_h * NA
-  r_estrela <- max(R[delta == 1])
+  r_estrela <- max(r_vector[delta == 1])
   xi_1 <- data_set[,cov_beta]
   alpha_gamma <- k_h + delta
   beta_gamma <- 1 / (0.5 + sapply(y_h, nelson_aalen_f) *
@@ -171,7 +171,7 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #'
 #' @param data_set Dataset used to fit the model.
 #' @param l_vector Vector containing the last check times before event.
-#' @param R Vector containing the first check times after event.
+#' @param r_vector Vector containing the first check times after event.
 #' @param delta Flag vector indicating failure inside interval.
 #' @param cov_theta String vector containing the column names to be used on the
 #'   cure rate predictor.
@@ -197,8 +197,8 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #'   reached.
 #' @examples
 #' sample_set <- sim_frailty_data(100)
-#' inter_frailty(sample_set, sample_set$l_vector, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 50)
-#' inter_frailty(sample_set, sample_set$l_vector, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 10)
+#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 50)
+#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 10)
 #' @export
 #' @import foreach
 inter_frailty <- function(data_set, l_vector, r_vector, delta,
@@ -299,7 +299,7 @@ inter_frailty <- function(data_set, l_vector, r_vector, delta,
         a_M <- MASS::mvrnorm(n=1, alpha, sigma_alpha)
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):compr_alpha]
-        y <- gera_yh(data_set, l_vector, R, delta,
+        y <- gera_yh(data_set, l_vector, r_vector, delta,
                      cov_theta, cov_beta, as.numeric(theta_M),
                      as.numeric(beta_M), mean_naalen)
         k <- gera_kh(y, data_set, delta,
