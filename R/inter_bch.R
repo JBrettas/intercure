@@ -1,9 +1,22 @@
-library(ICE)
 library(MASS)
-library(interval)
 library(Matrix)
-library(compiler)
-enableJIT(3)
+
+# inmost function from ICE package
+inmost <- function(data, eps = 1e-04)
+{
+  lr <- data.frame(data)
+  names(lr) <- c("l", "r")
+  lr$l <- lr$l * (1 + eps)
+  lr.stk <- stack(lr, select = c("l", "r"))
+  lr.order <- lr.stk[order(lr.stk[, 1]), ]
+  n <- length(lr.order[, 1])
+  lr1 <- data.frame(lr.order[-n, 1], lr.order[-1, 1], paste(lr.order[-n,
+                                                                     2], lr.order[-1, 2]))
+  names(lr1) <- c("q", "p", "label")
+  innermost <- lr1[lr1$label == "l r", ]
+  innermost[, 1] <- innermost[, 1]/(1 + eps)
+  innermost
+}
 
 # Create global variables s, r, m and sm1 for main function
 create_sr <- function(L,R){
@@ -11,10 +24,10 @@ create_sr <- function(L,R){
   s <- eq_int$q
   r <- eq_int$p
   if(!(max(L[R==Inf])>max(r[r!=Inf]))) {
-    cat("Warning: There is no event-free case with L_i > r_m")
+    stop("There is no event-free case with L_i > r_m")
   }
   m=length(r[r!=Inf])
-  if(as.logical(sum(!s%in%L) | sum(!r%in%R))) cat("Alerta: algum membro do conjunto s ou r nao pertence a L ou R respectivamente (rever banco de dados)")
+  if(as.logical(sum(!s%in%L) | sum(!r%in%R))) cat("Warning: a member of s or r is not in L or R sets (check dataframe)")
     s<<-s
     r<<-r
     m<<-m
@@ -22,27 +35,6 @@ create_sr <- function(L,R){
     sm1<-c(s0,s)
     sm1<<-sm1[-length(sm1)]
 }
-
-# Alternative function using Aintmap below
-#
-# Create global variables s, r, m and sm1 for main function
-# create_sr<-function(L,R){
-#   eq_int<-Aintmap(L,R,Lin=T,Rin=T)$intmap
-#   s<-eq_int[1,]
-#   r<-eq_int[2,]
-#   if(!(max(L[R==Inf])>max(r[r!=Inf]))) {
-#     cat("Warning: Dataset not compatible with the model: there is no case with L_i > r_m")
-#     stop
-#   }
-#   m=length(r[r!=Inf])
-#   if(as.logical(sum(!s%in%L) | sum(!r%in%R))) cat("Alerta: algum membro do conjunto s ou r nao pertence a L ou R respectivamente (rever banco de dados)")
-#   s<<-s
-#   r<<-r
-#   m<<-m
-#   s0<-(-Inf)
-#   sm1<-c(s0,s)
-#   sm1<<-sm1[-length(sm1)]
-# }
 
 # Computes the X matrix for the k-th iteraction, proposed by Shen and Hao
 compute_Xk<-function(theta,vector_prob,dados,L,R,covariates,F_hat){
@@ -335,5 +327,3 @@ sh_reg<-function(dados,L,R,covariates,Sigma=20,crit_theta=0.001,crit_p=0.005,n_i
   # Outputs an list with useful metrics
   return(list("par"=theta_k,"p"=p,"mcov"=theta_var,"StopC"=cPar))
 }
-
-
