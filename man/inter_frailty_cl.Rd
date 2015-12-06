@@ -4,12 +4,16 @@
 \alias{inter_frailty_cl}
 \title{Cure frailty model for interval censored clustered data.}
 \usage{
-inter_frailty_cl(data_set, left, right, delta, cov_theta, cov_beta, grp, M,
-  b = 0.001, n_int_max = 100, par_cl = NULL, burn_in = 50,
-  outputFiles = FALSE)
+inter_frailty_cl(dataset, left, right, delta, cov_theta, cov_beta, grp, M,
+  b = 0.001, max_n = 100, par_cl = NULL, burn_in = 50,
+  output_files = FALSE)
 }
 \arguments{
-\item{data_set}{Dataset used to fit the model.}
+\item{dataset}{Dataset used to fit the model.}
+
+\item{left}{Vector containing the last check times before event.}
+
+\item{right}{Vector containing the first check times after event.}
 
 \item{delta}{Flag vector indicating failure inside interval.}
 
@@ -26,39 +30,28 @@ predictor associated with the hazard function.}
 
 \item{b}{Numeric for tolerance of convergence.}
 
-\item{n_int_max}{Maximum number of algorithm's iterations without the burn
+\item{max_n}{Maximum number of algorithm's iterations without the burn
 in.}
 
 \item{par_cl}{Registered SOCK cluster for parallel process. If NULL (default)
 the program loops are executed sequentially.}
 
 \item{burn_in}{Number of burn in iterations.}
-
-\item{L}{Vector containing the last check times before event.}
-
-\item{R}{Vector containing the first check times after event.}
 }
 \value{
-The \code{inter_frailty} function returns an list containing the
-  following outputs.
-
-\code{par} estimates of theta and beta parameters.
-
-\code{mcov} estimates for the covariance matrix of theta and beta
-  parameters.
-
-\code{mcov.cura} estimates for the covariance matrix associated with
-  the cure rate part.
-
-\code{stop_c} stop criteria indicator assuming 1 when process is
+The \code{inter_frailty_cl} function returns an list containing the
+  following outputs:
+  \item{\code{par}}{estimates of theta and beta parameters.}
+  \item{\code{mcov}}{estimates for the covariance matrix of theta and beta
+  parameters.}
+  \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
   stopped for a non-convergence criteria. Assumes 0 when convergence is
-  reached.
+  reached.}
 }
 \description{
 \code{inter_frailty_cl} returns a list with the estimated parameters
 \code{par} and their covariance matrix \code{mcov}. The list also contains
-the cure rate covariance estimates \code{mcov.cura} for cure rate part only
-and a dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if
+a dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if
 a stop criteria ended the process.
 }
 

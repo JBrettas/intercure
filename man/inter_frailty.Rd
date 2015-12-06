@@ -47,8 +47,7 @@ The \code{inter_frailty} function returns an list containing the
 }
 \description{
 \code{inter_frailty} returns a list with the estimated parameters \code{par}
-and their covariance matrix \code{mcov}. The list also contains the cure rate
-covariance estimates \code{mcov.cura} for cure rate part only and a dummy
+and their covariance matrix \code{mcov}. The list also contains a dummy
 variable \code{stop_c} assuming 0 if algorithm converged and 1 if a stop
 criteria ended the process.
 }
