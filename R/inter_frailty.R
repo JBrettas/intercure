@@ -164,9 +164,9 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #' Fits cure rate frailty model for interval censored data
 #'
 #' \code{inter_frailty} returns a list with the estimated parameters \code{par}
-#' and their covariance matrix \code{mcov}. The list also contains a dummy
-#' variable \code{stop_c} assuming 0 if algorithm converged and 1 if a stop
-#' criteria ended the process.
+#' and their asymptotic covariance matrix \code{mcov}. The list also contains a
+#' dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if a
+#' stop criteria ended the process.
 #'
 #' @param dataset Dataset used to fit the model.
 #' @param left Vector containing the last check times before event.
@@ -193,7 +193,7 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #'   stopped for a non-convergence criteria. Assumes 0 when convergence is
 #'   reached.}
 #' @examples
-#' sample_set <- sim_frailty_data(100)
+#' sample_set <- sim_frailty(100)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 50)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 10)
 #' @export
