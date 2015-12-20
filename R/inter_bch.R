@@ -1,8 +1,5 @@
-#library(MASS)
-#library(Matrix)
-
 # inmost function from ICE package
-inmost <- function(data, eps = 1e-04){
+inmost2 <- function(data, eps = 1e-04){
   lr <- data.frame(data)
   names(lr) <- c("l", "r")
   lr$l <- lr$l * (1 + eps)
@@ -22,7 +19,7 @@ inmost <- function(data, eps = 1e-04){
 
 # Create global variables s, r, m and sm1 for main function
 create_sr <- function(L,R){
-  eq_int <- inmost(data.frame(L,R), 0)
+  eq_int <- inmost2(data.frame(L,R), 0)
   s <- eq_int$q
   r <- eq_int$p
   if(!(max(L[R == Inf]) > max(r[r != Inf]))) {
@@ -229,41 +226,6 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
   return(p)
 }
 
-# Simulates BCH with F= 1-exp(-t) given theta=c(alpha,beta)
-Sim_BCH <- function(N, alpha, beta){
-  z <- runif(N, -1, 1)
-  pi_Z <- rbinom(N, 1, exp(-exp(alpha + beta * z)))
-  U <- runif(N)
-  V1 <- (1 - exp(-exp(alpha + beta * z))) *
-    (1 - U) + exp(-exp(alpha + beta * z))
-  V2 <- -log(1 + (log(V1) / exp(alpha + beta * z)))
-  Times <- ifelse(pi_Z == 1, Inf, V2)
-  L <- R <- c(1:N) * 0
-  for (i in 1:N){
-    if(pi_Z[i] == 1){
-      L[i] <- 3
-      R[i] <- Inf
-    }
-    else{
-      R[i] <- rexp(1,5)
-      while (Times[i] < L[i] | Times[i] > R[i]) {
-        L[i] <- R[i]
-        R[i] <- R[i] + rexp(1,5)
-      }
-      if (R[i] >= 3){
-        R[i] <- Inf
-      }
-      if (L[i] >= 3){
-        L[i] <- 3
-      }
-
-    }
-  }
-  dados <- data.frame(Times, L, R, z)
-  colnames(dados) <- c("Times", "L", "R", "Cov")
-  return(dados)
-}
-
 #' Fits promotion time cure rate model for interval censored data
 #'
 #' \code{inter_bch} returns a list with the estimated parameters \code{par} and
@@ -285,17 +247,16 @@ Sim_BCH <- function(N, alpha, beta){
 #' variances should be generated.
 #' @return The \code{inter_bch} function returns an list containing the
 #'   following outputs:
-#'   \item{\code{par}}{estimates of theta and beta
-#'   parameters.}
+#'   \item{\code{par}}{estimates of theta parameters.}
 #'   \item{\code{mcov}}{estimates for the asymptotic covariance
-#'   matrix of theta and beta parameters.}
+#'   matrix of theta parameters.}
 #'   \item{\code{stop_c}}{stop criteria
 #'   indicator assuming 1 when process is stopped for a non-convergence
 #'   criteria. Assumes 0 when convergence is reached.}
 #' @examples
-#' sample_set <- sim_frailty_data(100)
-#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 50)
-#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 10)
+#' sample_set <- sim_bch(100)
+#' inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1","xi2"))
+#' inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1"))
 #' @export
 inter_bch <- function(dataset, left, right,
                       cov, sigma = 10,
@@ -310,11 +271,6 @@ inter_bch <- function(dataset, left, right,
       paste("PAR:\t",paste0(c("Intercept",cov), collapse="\t")),
       file=fileconn, append=T, sep="")
   }
-
-
-#   est_file_name <- paste(OUTPUT_FILE,".txt", sep="")
-#   var_file_name <- paste(OUTPUT_VAR_FILE,".txt", sep="")
-#   fileconn <- file(est_file_name, "w")
 
   # Specifying the covariates
   dataset <- as.data.frame(dataset)
@@ -333,7 +289,7 @@ inter_bch <- function(dataset, left, right,
   # F initial estimator
   F_hat_aux <- data.frame(r[1:m], cumsum(p))
   colnames(F_hat_aux) <- c("time", "cum")
-  F_hat <- stepfun(F_hat_aux$time, c(0, F_hat_aux$cum))
+  F_hat <- stats::stepfun(F_hat_aux$time, c(0, F_hat_aux$cum))
 
   # Initial theta
   theta_k <- c(1:ncol(Z)) * 0
@@ -348,7 +304,7 @@ inter_bch <- function(dataset, left, right,
   # ECM Loop
   while(!CONV | !CONV2){
     # Computing matrix X and C
-    if ((it)%%10 == 0 ) cat("Iteration:",(it))
+    if ( (it) %% 10 == 0 ) cat("Iteration:", (it))
     Xk <- compute_Xk(theta_k, p, dataset, left, right, cov, F_hat, inmost_list)
     C <- compute_C(Xk, inmost_list)
 
@@ -365,10 +321,12 @@ inter_bch <- function(dataset, left, right,
 
     # Checking theta convergence
     CONV <- (max(abs(theta_knew - theta_k)) < crit_theta)
-    if ((it)%%10 == 0 ) cat("\nTheta Max Difference:",max(abs(theta_knew - theta_k)))
+    if ( (it) %% 10 == 0 )
+      cat("\nTheta Max Difference:",max(abs(theta_knew - theta_k)))
 
     # Updating Xk for new theta
-    Xk <- compute_Xk(theta_knew, p, dataset, left, right, cov, F_hat, inmost_list)
+    Xk <- compute_Xk(theta_knew, p, dataset,
+                     left, right, cov, F_hat, inmost_list)
 
     # Computing p vector for new Xk and theta
     novo_p <- max_p(p, theta_knew, Xk,
@@ -376,18 +334,18 @@ inter_bch <- function(dataset, left, right,
 
     # Checking p convergence
     CONV2 <- (max(abs(novo_p - p)) < crit_p)
-    if ((it)%%10 == 0 ) cat("\np Max Difference:", max(abs(novo_p - p)), "\n\n")
+    if ( (it) %% 10 == 0 )
+      cat("\np Max Difference:", max(abs(novo_p - p)), "\n\n")
 
     # Updating parameters
     p <- novo_p
     F_hat_aux <- data.frame(r[1:m],cumsum(p))
     colnames(F_hat_aux) <- c("time","cum")
-    F_hat <- stepfun(F_hat_aux$time,c(0,F_hat_aux$cum))
+    F_hat <- stats::stepfun(F_hat_aux$time,c(0,F_hat_aux$cum))
     theta_k <- theta_knew
 
     # Writing new estimates on file
     if (output_files) {
-      #write(as.vector(theta_k),file=fileconn,append=T,sep=" ")
       write(paste("IT",it,":\t",
                   paste0(theta_k, collapse="\t")),
             file=fileconn, append=T, sep="")

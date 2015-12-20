@@ -24,8 +24,8 @@ test_that("just one covariate works on inter_frailty", {
 
 # expect result (safety for changes)
 test_that("results doesn't change", {
-  expect_equal(fit$par, c(-0.6035598, -0.2570020), tolerance = 0.000001)
-  expect_equal(fitx2$par, c(-0.7927699,  0.2740729), tolerance = 0.000001)
+  expect_equal(fit$par, c(-0.6035598, -0.2570020), tolerance = 0.0001)
+  expect_equal(fitx2$par, c(-0.7927699,  0.2740729), tolerance = 0.0001)
 })
 
 
