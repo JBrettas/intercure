@@ -472,10 +472,10 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
       if (output_files) {
         write("\nWarning: Iteration Number achieved but
               convergence criteria not met.",file=fileconn,append=T, sep=" ")
-        close(fileconn)
       }
       cat("\nWarning: Convergence criteria not met. Estimates given
           for max_n=", max_n)
+      cat("\n")
       break
     }
   }

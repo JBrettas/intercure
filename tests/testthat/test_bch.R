@@ -1,8 +1,5 @@
 context("inter_bch")
 
-load("test_no_cure.RData")
-load("data_test_frailty.RData")
-
 # no cure threshold
 test_that("stops if no cure threshold is found", {
   expect_error(inter_bch(test_no_cure,
@@ -13,7 +10,7 @@ test_that("stops if no cure threshold is found", {
 })
 
 # one covariate
-fit <- inter_bch(data_test_frailty, data_test_frailty$L, data_test_frailty$R, "xi1", output_files = TRUE)
+fit <- inter_bch(data_test_frailty, data_test_frailty$L, data_test_frailty$R, "xi1")
 fitx2 <- inter_bch(data_test_frailty, data_test_frailty$L, data_test_frailty$R, "xi2")
 test_that("just one covariate works on inter_frailty", {
   expect_is(fit$par,"numeric")

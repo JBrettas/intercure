@@ -41,6 +41,6 @@ A generated dataset with columns: \code{Z}, the actual event time;
 model.
 }
 \examples{
-sim_frailty(20)
+sim_frailty_cl(50)
 }
 
