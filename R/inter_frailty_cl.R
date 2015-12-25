@@ -77,13 +77,15 @@ log_vero_beta <- function(beta, cov_beta, y_h, u_h, data_set){
 surv_cl <- function(tempo, i, j,
                     theta, beta, gamma,
                     cov_theta, cov_beta, grp,
-                    nelson_aalen_function, dataset) {
+                    nelson_aalen_function, dataset,
+                    event_times) {
   w <- exp(gamma)
   base_cl <- dataset[grp == i,]
+  event_times_cl <- event_times[grp == i]
   etas_i <- as.numeric(exp(theta %*% t(cbind(1, base_cl[,cov_theta]))))
   mus_i <- as.numeric(exp(beta %*% t(base_cl[,cov_beta])))
   if (j == 1) {
-    surv_1_cl_i <- (1 + (etas_i[1] / 2 * w) *
+    surv_1_cl_i <- (1 + (etas_i[1] / (2 * w)) *
                       (1 - 1 / (2 * mus_i[1] *
                                   nelson_aalen_function(tempo) + 1))) ^ (-w)
     return(surv_1_cl_i)
@@ -92,17 +94,22 @@ surv_cl <- function(tempo, i, j,
     (1 - (1 / (2 * mus_i[j] * nelson_aalen_function(tempo) + 1)))
   den <- w + sum( (etas_i[1:(j - 1)] / 2) *
                    (1 - (1 / (2 * mus_i[1:(j - 1)] *
-                                nelson_aalen_function(tempo) + 1))))
+                                (sapply(event_times_cl,
+                                        nelson_aalen_function)[1:(j - 1)]) +
+                                1))))
   surv_j_cl_i <- (1 + num / den) ^ (-w - sum(base_cl$delta[1:(j - 1)]))
   return(surv_j_cl_i)
 }
 
 f_cond_effect <- function(tempo, l, r,
                           i, j, theta, beta, gamma,
-                          cov_theta, cov_beta, grp, nelson_aalen_function, dataset){
+                          cov_theta, cov_beta, grp,
+                          nelson_aalen_function, dataset,
+                          event_times){
   s_cl <- function(t_gen) surv_cl(t_gen, i, j,
                                   theta, beta, gamma, cov_theta, cov_beta,
-                                  grp, nelson_aalen_function, dataset)
+                                  grp, nelson_aalen_function,
+                                  dataset, event_times)
   naalen_mod <- function(t_gen) {
     (nelson_aalen_function(l) * (r - t_gen) +
        nelson_aalen_function(r) * (t_gen - l)) / (r - l)
@@ -110,7 +117,8 @@ f_cond_effect <- function(tempo, l, r,
   s_cl_mod <- function(t_gen) surv_cl(t_gen, i, j,
                                       theta, beta, gamma,
                                       cov_theta, cov_beta, grp,
-                                      naalen_mod, dataset)
+                                      naalen_mod, dataset,
+                                      event_times)
   num <- s_cl_mod(tempo) - s_cl(r)
   den <- s_cl(l) - s_cl(r)
   return(as.numeric(1 - (num / den)))
