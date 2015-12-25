@@ -127,7 +127,7 @@ gera_yh_effect <- function(left, right, delta, cov_theta, cov_beta,
                            nelson_aalen_function, dataset){
   new_yh <- NA
   for(i in unique(grp)) {
-    times_cl_i <- rep(NA,nrow(dataset[grp == i,]))
+    times_cl_i <- rep(NA, nrow(dataset[grp == i,]))
     delta_cl_i <- delta[grp == i]
     l_cl_i <- left[grp == i]
     r_cl_i <- right[grp == i]
@@ -137,7 +137,7 @@ gera_yh_effect <- function(left, right, delta, cov_theta, cov_beta,
       } else {
          if (l_cl_i[j] == r_cl_i[j]) {
           times_cl_i[j] <- l_cl_i[j]
-        } else{
+        } else {
           u_var <- runif(1)
           cumf_y_cond <- function(x) f_cond_effect(x, l_cl_i[j], r_cl_i[j],
                                                    i, j,
@@ -199,7 +199,8 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
                              par_cl = NULL,
                              burn_in=50, output_files = FALSE) {
-  dataset <- as.data.frame(dataset)
+  # arranges dataset by clusters
+  dataset <- as.data.frame(dataset[order(grp),])
 
   if (output_files) {
     est_file_name <- paste("LAM_Estimates.txt", sep="")
