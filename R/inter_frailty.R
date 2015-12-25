@@ -228,10 +228,6 @@ inter_frailty <- function(dataset, left, right, delta,
   a_M <- matrix(NA, nrow=M, ncol=compr_alpha)
   lbls <- c("intercept", cov_theta, cov_beta)
   colnames(a_M) <- lbls
-  theta_M <- matrix(a_M[,1:compr_theta], nrow=M)
-  colnames(theta_M) <- lbls[1:compr_theta]
-  beta_M <- matrix(a_M[, (compr_theta + 1):compr_alpha], nrow=M)
-  colnames(beta_M) <- lbls[(compr_theta + 1):compr_alpha]
   alpha <- c(1:compr_alpha) * 0
   sigma_alpha <- b * diag(compr_alpha)
   beta <- alpha[(compr_theta + 1):compr_alpha]
