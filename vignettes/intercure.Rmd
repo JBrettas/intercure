@@ -14,7 +14,67 @@ library(pander)
 library(intercure)
 ```
 
-The `intercure` package provides implementations of semiparametric cure rate estimators for interval censored data using the bounded cumulative hazard and the frailty models. For clustered datasets, an extension of the frailty model proposed on Lam et al is also implemented to incorporate the group effects. This package also provides functions to generate interval censored datasets with a cure fraction using different specifications.
+The `intercure` package provides implementations of semiparametric cure rate estimators for interval censored data using the bounded cumulative hazard and the frailty models. For clustered datasets, an extension of the frailty model proposed on Lam et al is also implemented to incorporate the group effects. This package also provides functions to generate interval censored datasets with a cure fraction using different specifications. The readers should keep in mind that this vignette focuses on how to use the estimators with this package. Theorical details and a full description of each algorithm can be encountered on the cited articles.
+
+## Bounded cumulative hazard model
+
+Assuming the bounded cumulative hazard model, the populational survival function can be written as:
+
+$$S(t | \boldsymbol{Z}) = P(T \geq t | \boldsymbol{Z}) = \exp(-e^{\alpha + \boldsymbol{\beta}'\boldsymbol(Z)}F^{*}(t))$$
+
+where $F^{*}(t)$ is a completely unknown regular cumulative distribution function, $\boldsymbol{Z}$ is the covariate vector, $\alpha$ is the intercept to be estimated and $\boldsymbol{\beta}$ is the vector of effects associated to $\boldsymbol{Z}$. Taking the limit of the expression above gives $\exp(-e^{\alpha + \boldsymbol{\beta}'\boldsymbol(Z)})$, the probability of being cured.
+
+In this specification, $F^{*}(t)$ is related to the promotion time of each of the $N$ tumorous cells, as well known in literature for this motivation. For interval censored data, the proposed semiparametric model uses the non-parametric Turnbull estimator for this component, restricting the search of the distribution function estimate to an equivalence class.
+
+In general, the estimation proccess is based on the ECM algorithm, with the authors proposing the use of convex optimization techniques to deal with the high dimensionality problem implied by the use of the equivalence classes. The algorithm, based on a C routine implemented by the original authors, is fully described on Shen (2009). The next sections provides examples generating data with the promotion time specification and fitting the proposed model.
+
+### sim_bch function
+
+The `sim_bch` function output consists on a interval censored dataset containing a cure fraction, specified by the user with the input parameters. The dataset contains two covariates: a binary variable $X_1 \sim Bernoulli(\mbox{prob})$, with `prob` specified as an input; a continuous variable $X_2 \sim N(0,1)$. The effects of these covariates are given by the `theta` parameter, consisting on a vector with the intercept and the effects of each covariate. The `lambda` parameter is related to the mean event time of each tumorous cell, which follows here an exponential distribution. The censoring mechanism is controlled by the user with the $A$ and $B$ parameters, as the random censoring is defined as $C = \min(A, a*B)$, with $a \sim U(0,1)$.
+
+A dataset based on the bounded cumulative hazard cure model can be generated as it follows:
+
+```{r, eval = FALSE}
+sim_bch(10)
+```
+
+```{r, echo = FALSE}
+set.seed(3)
+pander(sim_bch(10))
+```
+
+### inter_bch function
+
+To fit a cure rate model for a interval censored dataset using the promotion time specification, the user can call the function `inter_bch` for this purpose. For this, and also for any cure rate estimation proccess, the modeller should have a strong motivation about the possibility of cure in the target dataset.
+
+The use of the `inter_bch` function is shown below:
+
+```{r, message = FALSE, warning = FALSE, results = 'hide', cache = TRUE}
+# hypothetical interval censored dataset with a cure fraction
+cureset <- sim_bch(100)
+
+# allocates the estimated parameters and covariance matrix
+output <- inter_bch(cureset, 
+                        cureset$L, cureset$R, 
+                        c("xi1", "xi2"))
+```
+
+The estimated parameters are:
+
+```{r}
+output$par
+```
+
+Fixing $X_1 = 1$ and $X_2 = 0$, an estimate of the cure rate can be obtained as follows:
+
+```{r}
+indiv <- c(1, 1, 0)
+est_effect <- output$par
+cf <- exp(-exp(est_effect[1:3]%*%indiv))
+cf
+```
+
+Then, based on the bounded cumulative hazard model, the probability of an individual with $X_1 = 1$ and $X_2 = 0$ being cured is give by `r cf`.
 
 ## Frailty model
 
@@ -39,7 +99,7 @@ For estimation, the model uses multiple imputation techniques (asymptotic normal
 
 The times to events are obtained with the conditional distribution of $T$ given the interval censoring and all the augmented data, using the Nelson-Aalen estimator to obtain the cumulative hazard. The algorithm steps and a full description of the model are given on Lam et al (2007).
 
-Based on the original paper, taking the limit of $t \leftarrow \infty$ for the individual $i$ survival function, we have:
+Based on the original paper, taking the limit of $t \rightarrow \infty$ for the individual $i$ survival function, we have:
 
 $$ P(\mbox{cured} | \boldsymbol{x_i}) = P(K_i = 0 | \boldsymbol{x_i}) = \exp( -{e^{\boldsymbol{\theta}'\boldsymbol{x^{(0)}}} / 2}). $$
 
@@ -109,4 +169,46 @@ output <- inter_frailty(cureset,
 stopCluster(cl)
 ```
 
-## Bounded cumulative hazard model
+## Frailty model to clustered data
+
+The frailty model have an natural extension for clustered data, presented on Lam et al (2014). The theorical details of this extension, despite its simplicity, are not shown here and can be seen on the original paper, as recommended. The function `inter_frailty_cl` presents the same syntax as the non-clustered data version with exception of a new parameter, `grp`, which should contain a vector of groups ids. A different function was implemented having in mind the differences on the estimation proccess. It can be shown that, for a fixed cluster, the cure fraction is obtained as it follows:
+
+$$ P(\mbox{cured} | \Ksi_i = \ksi_i, \boldsymbol{x_i}) = P(K_i = 0 | \Ksi_i = \ksi_i, \boldsymbol{x_i}) = \exp( -{\ksi_i \times e^{\boldsymbol{\theta}'\boldsymbol{x^{(0)}}} / 2}). $$
+
+### sim_frailty_cl
+
+This function generates a clustered interval censored dataset containing a cure fraction based on the frailty model described on Lam et al (2014).
+
+To generate a dataset of 15 rows with 3 different groups, the user can use the `sim_frailty_cl` function, as it follows:
+
+```{r, eval = FALSE}
+sim_frailty_cl(15, nclus = 3)
+```
+
+```{r, echo = FALSE}
+set.seed(3)
+pander(sim_frailty_cl(15, nclus = 3))
+```
+
+### inter_frailty_cl function
+
+The `inter_frailty_cl` function uses the algorithm proposed on Lam et al (2014) to fit a cure rate model on clustered interval censored data. The input parameters are the same as the `inter_frailty` function, with exception of `grp`, a vector identifying the cluster of each observation.
+
+```{r, message = FALSE, warning = FALSE, results = 'hide', cache = TRUE}
+# hypothetical interval censored dataset with a cure fraction
+cureset <- sim_frailty_cl(200, nclus = 3)
+
+# allocates the estimated parameters and covariance matrix
+output <- inter_frailty_cl(cureset, 
+                        cureset$L, cureset$R, cureset$delta, 
+                        c("xi1", "xi2"), c("xi1", "xi2"),
+                        grp = cureset$clus, M = 10)
+```
+
+The estimated parameters are:
+
+```{r}
+output$par
+```
+
+The output vector on `$par` have, as the non-clustered version, the effects associated with the incidence and latency of the model. One additional parameter is estimated and shown: $\log(w)$, where the group effect is obtained from $Gamma(w, w)$, as can be seen on the original paper. As the mean of the group effect is 1, the cure rate for this scenario, fixing the cluster effects as its mean, is obtained the same way as for the `inter_frailty` function previosly shown.
