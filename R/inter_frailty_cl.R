@@ -78,98 +78,74 @@ surv_cl <- function(tempo, i, j,
                     theta, beta, gamma,
                     cov_theta, cov_beta, grp,
                     nelson_aalen_function, dataset,
-                    partial_times) {
+                    partial_times,
+                    partial_l,
+                    partial_r,
+                    naalen_mod) {
+
   w <- exp(gamma)
   base_cl <- dataset[grp == i,]
   etas_i <- as.numeric(exp(theta %*% t(cbind(1, base_cl[,cov_theta]))))
   mus_i <- as.numeric(exp(beta %*% t(base_cl[,cov_beta])))
+
   if (j == 1) {
     surv_1_cl_i <- (1 + (etas_i[1] / (2 * w)) *
                       (1 - 1 / (2 * mus_i[1] *
-                                  nelson_aalen_function(tempo) + 1))) ^ (-w)
-    #cat("surv1", surv_1_cl_i)
+                                  naalen_mod(tempo, partial_l[j], partial_r[j]) + 1))) ^ (-w)
     return(surv_1_cl_i)
   }
+
   num <- (etas_i[j] / 2) *
-    (1 - (1 / (2 * mus_i[j] * nelson_aalen_function(tempo) + 1)))
+    (1 - (1 / (2 * mus_i[j] * naalen_mod(tempo, partial_l[j], partial_r[j]) + 1)))
   den <- w + sum( (etas_i[1:(j - 1)] / 2) *
                    (1 - (1 / (2 * mus_i[1:(j - 1)] *
                                 (sapply(partial_times[1:(j - 1)],
                                         nelson_aalen_function)) +
                                 1))))
   surv_j_cl_i <- (1 + num / den) ^ (-w - sum(base_cl$delta[1:(j - 1)]))
-  #cat("survj", surv_j_cl_i)
   if (is.nan(surv_j_cl_i) | surv_j_cl_i == -Inf) {
-    g_tempo <<- tempo
-    g_i <<- i
-    g_j <<- j
-    g_theta <<- theta
-    g_beta <<- beta
-    g_gamma <<- gamma
-    g_cov_theta <<- cov_theta
-    g_cov_beta <<- cov_beta
-    g_grp <<- grp
-    g_nelson_mod <<- nelson_aalen_function
-    g_dataset <<- dataset
-    g_partial_times <<- partial_times
-    stop("Gotcha")
+    stop("Estimated survival is NaN or -Inf")
   }
   return(surv_j_cl_i)
 }
-
-# abaixo pode ser substituído por inversa analítica de y
-# chega em mais de uma iteração (teste foi em 5)
-
-f_cond_effect <- function(tempo, l, r,
-                          i, j, theta, beta, gamma,
-                          cov_theta, cov_beta, grp,
-                          nelson_aalen_function, dataset,
-                          partial_times){
-#   s_cl <- function(t_gen) surv_cl(t_gen, i, j,
-#                                   theta, beta, gamma, cov_theta, cov_beta,
-#                                   grp, nelson_aalen_function,
-#                                   dataset, partial_times)
-  naalen_mod <- function(t_gen) {
-    (nelson_aalen_function(l) * (r - t_gen) +
-       nelson_aalen_function(r) * (t_gen - l)) / (r - l)
-  }
-  s_cl_mod <- function(t_gen) surv_cl(t_gen, i, j,
-                                      theta, beta, gamma,
-                                      cov_theta, cov_beta, grp,
-                                      naalen_mod, dataset,
-                                      partial_times)
-  num <- s_cl_mod(tempo) - s_cl_mod(r)
-  den <- s_cl_mod(l) - s_cl_mod(r)
-  #cat("\n resp", as.numeric(1 - (num / den)))
-  return(as.numeric(1 - (num / den)))
-}
-
 
 gera_y_cl <- function(u_gen, l, r,
                           i, j, theta, beta, gamma,
                           cov_theta, cov_beta, grp,
                           nelson_aalen_function, dataset,
-                          partial_times){
+                          partial_times,
+                          partial_l, partial_r){
 
-  naalen_mod <- function(t_gen) {
-    (nelson_aalen_function(l) * (r - t_gen) +
-       nelson_aalen_function(r) * (t_gen - l)) / (r - l)
+  # consider how to use this to generate y (each lambda envolved?)
+  naalen_mod <- function(t_gen, l_i, r_i) {
+    res <- (nelson_aalen_function(l_i) * (r_i - t_gen) +
+       nelson_aalen_function(r_i) * (t_gen - l_i)) / (r_i - l_i)
+    if(res < 0 | is.nan(res)) {
+      stop ("naalen_mod < 0 or NaN")
+    }
+    res
   }
 
   s_cl_mod <- function(t_gen) surv_cl(t_gen, i, j,
                                       theta, beta, gamma,
                                       cov_theta, cov_beta, grp,
-                                      naalen_mod, dataset,
-                                      partial_times)
+                                      nelson_aalen_function, dataset,
+                                      partial_times,
+                                      partial_l,
+                                      partial_r,
+                                      naalen_mod)
   w <- exp(gamma)
   base_cl <- dataset[grp == i,]
   etas_i <- as.numeric(exp(theta %*% t(cbind(1, base_cl[,cov_theta]))))
   mus_i <- as.numeric(exp(beta %*% t(base_cl[,cov_beta])))
-  g_pure_aalen <<- nelson_aalen_function
   n_l <- nelson_aalen_function(l)
   n_r <- nelson_aalen_function(r)
+
+
   s_l <- s_cl_mod(l)
+
   s_r <- s_cl_mod(r)
+
   k_1 <- (s_l - s_r)*(1 - u_gen) + s_r
 
   if (j ==1) {
@@ -178,90 +154,14 @@ gera_y_cl <- function(u_gen, l, r,
     k_1_5 <- (k_1 ^ ( 1 / (-w - sum(base_cl$delta[1:(j - 1)]) ) ) - 1)*(w + sum( (etas_i[1:(j - 1)] / 2) *
                                                                                    (1 - (1 / (2 * mus_i[1:(j - 1)] *
                                                                                                 (sapply(partial_times[1:(j - 1)],
-                                                                                                        naalen_mod)) +
+                                                                                                        nelson_aalen_function)) +
                                                                                                 1)))))
     k_2 <- (etas_i[j] / ((etas_i[j] - 2*k_1_5)*2*mus_i[j])) - 1/(2*mus_i[j])
   }
-  cat("\n l", l)
-  cat("\n r", r)
-  cat("\n i", i)
-  cat("\n j", j)
-  cat("\n s_l", s_l)
-  cat("\n s_r", s_r)
-  cat("\n n_l", n_l)
-  cat("\n n_r", n_r)
+
   gen_time <- (k_2 * (r - l) - n_l*r + n_r*l) / (n_r - n_l)
-  cat("\n gen_time", gen_time)
   return(gen_time)
 }
-
-
-
-
-
-
-
-
-
-
-inverse_f <- function (f, lower = 0.1, upper = 100) {
-  function (y) stats::uniroot((function (x) f(x) - y),
-                              lower = lower, upper = upper)[1]
-}
-
-#Generates a vector of n observations using the previous function
-gera_yh_effect <- function(left, right, delta, cov_theta, cov_beta,
-                           grp, theta, beta, gamma,
-                           nelson_aalen_function, dataset){
-  new_yh <- NA
-  for(i in unique(grp)) {
-    times_cl_i <- rep(NA, nrow(dataset[grp == i,]))
-    delta_cl_i <- delta[grp == i]
-    l_cl_i <- left[grp == i]
-    r_cl_i <- right[grp == i]
-    for(j in c(1:length(times_cl_i))) {
-      if(delta_cl_i[j] == 0) {
-        times_cl_i[j] <- l_cl_i[j]
-      } else {
-         if (l_cl_i[j] == r_cl_i[j]) {
-          times_cl_i[j] <- l_cl_i[j]
-        } else {
-          u_var <- runif(1)
-          cumf_y_cond <- function(x) f_cond_effect(x, l_cl_i[j], r_cl_i[j],
-                                                   i, j,
-                                                   theta, beta, gamma,
-                                                   cov_theta,
-                                                   cov_beta,
-                                                   grp,
-                                                   nelson_aalen_function,
-                                                   dataset, times_cl_i)
-          inverse_f_cond_effect <- inverse_f(function(x) cumf_y_cond(x),
-                                           l_cl_i[j], r_cl_i[j])
-          cat("\n u_var", u_var)
-          cat("\n L",l_cl_i[j])
-          cat("\n R",r_cl_i[j])
-          cat("\n n_L",nelson_aalen_function(l_cl_i[j]))
-          cat("\n n_R",nelson_aalen_function(r_cl_i[j]))
-          cat("\n theta", theta)
-          cat("\n beta", beta)
-          cat("\n gamma", gamma)
-          cat("\n exp_gamma", exp(gamma))
-
-          times_cl_i[j] <- inverse_f_cond_effect(u_var)$root
-          }
-        }
-    }
-    new_yh <- c(new_yh, times_cl_i)
-  }
-  new_yh <- new_yh[-1]
-  return(new_yh)
-}
-
-
-
-
-
-
 
 #Generates a vector of n observations using the previous function
 gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
@@ -281,8 +181,7 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
           times_cl_i[j] <- l_cl_i[j]
         } else {
           u_var <- runif(1)
-          cat("\n l_cl_i", l_cl_i[j])
-          cat("\n r_cl_i", r_cl_i[j])
+
           times_cl_i[j] <- gera_y_cl(u_var, l_cl_i[j], r_cl_i[j],
                                      i, j,
                                      theta, beta, gamma,
@@ -290,8 +189,16 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
                                      cov_beta,
                                      grp,
                                      nelson_aalen_function,
-                                     dataset, times_cl_i)
-          if(times_cl_i[j] > r_cl_i[j] | times_cl_i[j] < l_cl_i[j]) stop("generated time out of interval")
+                                     dataset, times_cl_i,
+                                     l_cl_i,
+                                     r_cl_i)
+
+          if(times_cl_i[j] > r_cl_i[j] | times_cl_i[j] < l_cl_i[j]) {
+            cat("\n l_cl_i", l_cl_i[j])
+            cat("\n r_cl_i", r_cl_i[j])
+            cat("\n gen", times_cl_i[j])
+            stop("generated time out of interval")
+          }
         }
       }
     }
@@ -411,8 +318,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                           .packages=c("MASS","MLEcens","Matrix",
                                       "survival","stats4","plyr"),
                           .export=c("surv_cl",
-                                    "inverse_f", "f_cond_effect",
-                                    "gera_yh_effect", "gera_yh_effect2",
+                                    "gera_yh_effect2",
                                     "gera_ksih_effect", "gera_kh_effect",
                                     "log_vero_gamma", "gera_uh"),
                           .inorder=F) %dopar% {
@@ -432,9 +338,9 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                 cov_theta, cov_beta, grp,
                                 theta_M, beta_M,
                                 naalen_avg)
-        k <- k_aux$k
-        ksi_geral <- k_aux$ksi
-        u <- gera_uh(y, k, dataset, right, delta, cov_beta, beta_M, naalen_avg)
+        k <- k_aux$k # vetorzao de k para algum h
+        ksi_geral <- k_aux$ksi # m efeitos de grupo, onde m = numero de grupos
+        u <- gera_uh(y, k, dataset, right, delta, cov_beta, beta_M, naalen_avg) # checked!
 
         #Gamma Regression for w
         fit_gamma <- stats4::mle(log_vero_gamma,
@@ -470,8 +376,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
       list_reg <- foreach(iterators::icount(M),
                           .packages=c("MASS","MLEcens","Matrix","survival",
                                       "stats4","plyr"),
-                          .export=c("surv_cl","inverse_f",
-                                    "f_cond_effect", "gera_yh_effect",
+                          .export=c("surv_cl",
                                     "gera_yh_effect2",
                                     "gera_ksih_effect",
                                     "gera_kh_effect","log_vero_gamma",
@@ -599,6 +504,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
 
     #Setting new alpha as old one for iteractive process
     alpha <- alpha_new
+    cat("\n alpha:", alpha)
     #})
     #print(iter_time)
 
