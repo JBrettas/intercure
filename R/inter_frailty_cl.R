@@ -211,6 +211,105 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 
 
 
+surv_cl_alt <- function(tempo, i, j,
+                    theta, beta, gamma,
+                    cov_theta, cov_beta, grp,
+                    nelson_aalen_function, dataset) {
+  w <- exp(gamma)
+  base_cl <- dataset[grp == i,]
+  etas_i <- as.numeric(exp(theta %*% t(cbind(1, base_cl[,cov_theta]))))
+  mus_i <- as.numeric(exp(beta %*% t(base_cl[,cov_beta])))
+  if (j == 1) {
+    surv_1_cl_i <- (1 + (etas_i[1] / (2 * w)) *
+                      (1 - 1 / (2 * mus_i[1] *
+                                  nelson_aalen_function(tempo) + 1))) ^ (-w)
+    return(surv_1_cl_i)
+  }
+  num <- (etas_i[j] / 2) *
+    (1 - (1 / (2 * mus_i[j] * nelson_aalen_function(tempo) + 1)))
+  den <- w + sum( (etas_i[1:(j - 1)] / 2) *
+                    (1 - (1 / (2 * mus_i[1:(j - 1)] *
+                                 nelson_aalen_function(tempo) + 1))))
+  surv_j_cl_i <- (1 + num / den) ^ (-w - sum(base_cl$delta[1:(j - 1)]))
+  return(surv_j_cl_i)
+}
+
+
+
+
+f_cond_effect <- function(tempo, l, r,
+                          i, j, theta, beta, gamma,
+                          cov_theta, cov_beta, grp, nelson_aalen_function, dataset){
+  naalen_mod <- function(t_gen) {
+    (nelson_aalen_function(l) * (r - t_gen) +
+       nelson_aalen_function(r) * (t_gen - l)) / (r - l)
+  }
+  s_cl_mod <- function(t_gen) surv_cl_alt(t_gen, i, j,
+                                      theta, beta, gamma,
+                                      cov_theta, cov_beta, grp,
+                                      naalen_mod, dataset)
+  num <- s_cl_mod(tempo) - s_cl_mod(r)
+  den <- s_cl_mod - s_cl_mod(r)
+  return(as.numeric(1 - (num / den)))
+}
+
+
+inverse_f <- function (f, lower = 0.1, upper = 100) {
+  function (y) stats::uniroot((function (x) f(x) - y),
+                              lower = lower, upper = upper)[1]
+}
+
+#Generates a vector of n observations using the previous function
+gera_yh_effect_alt <- function(left, right, delta, cov_theta, cov_beta,
+                           grp, theta, beta, gamma,
+                           nelson_aalen_function, dataset){
+  new_yh <- NA
+  for(i in unique(grp)) {
+    times_cl_i <- rep(NA,nrow(dataset[grp == i,]))
+    delta_cl_i <- delta[grp == i]
+    l_cl_i <- left[grp == i]
+    r_cl_i <- right[grp == i]
+    for(j in c(1:length(times_cl_i))) {
+      if(delta_cl_i[j] == 0) {
+        times_cl_i[j] <- l_cl_i[j]
+      } else {
+        if (l_cl_i[j] == r_cl_i[j]) {
+          times_cl_i[j] <- l_cl_i[j]
+        } else{
+          u_var <- runif(1)
+          cumf_y_cond <- function(x) f_cond_effect(x, l_cl_i[j], r_cl_i[j],
+                                                   i, j,
+                                                   theta, beta, gamma,
+                                                   cov_theta,
+                                                   cov_beta,
+                                                   grp,
+                                                   nelson_aalen_function,
+                                                   dataset)
+          inverse_f_cond_effect <- inverse_f(function(x) cumf_y_cond(x),
+                                             l_cl_i[j], r_cl_i[j])
+          times_cl_i[j] <- inverse_f_cond_effect(u_var)
+        }
+      }
+    }
+    new_yh <- c(new_yh, times_cl_i)
+  }
+  new_yh <- new_yh[-1]
+  return(new_yh)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -253,7 +352,8 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
                              par_cl = NULL,
-                             burn_in=50, output_files = FALSE) {
+                             burn_in=50, output_files = FALSE,
+                             ALT = FALSE) {
   # arranges dataset by clusters
   order_aux <- order(grp)
   dataset <- as.data.frame(dataset[order_aux,])
@@ -318,7 +418,8 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                           .packages=c("MASS","MLEcens","Matrix",
                                       "survival","stats4","plyr"),
                           .export=c("surv_cl",
-                                    "gera_yh_effect2",
+                                    "gera_yh_effect2","gera_yh_effect_alt",
+                                    "f_cond_effect", "surv_cl_alt", "inverse_f",
                                     "gera_ksih_effect", "gera_kh_effect",
                                     "log_vero_gamma", "gera_uh"),
                           .inorder=F) %dopar% {
@@ -326,10 +427,18 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):(compr_alpha - 1)]
         gamma_M <- a_M[compr_alpha]
-        y <- as.numeric(gera_yh_effect2(left, right, delta, cov_theta,
-                                       cov_beta, grp, theta_M,
-                                       beta_M, gamma_M,
-                                       naalen_avg, dataset))
+        if(!ALT) {
+          y <- as.numeric(gera_yh_effect2(left, right, delta, cov_theta,
+                                          cov_beta, grp, theta_M,
+                                          beta_M, gamma_M,
+                                          naalen_avg, dataset))
+        } else {
+          y <- as.numeric(gera_yh_effect_alt(left, right, delta, cov_theta,
+                                          cov_beta, grp, theta_M,
+                                          beta_M, gamma_M,
+                                          naalen_avg, dataset))
+        }
+
         ksi <- gera_ksih_effect(y, dataset, delta,
                                 cov_theta, cov_beta, grp,
                                 theta_M, beta_M, gamma_M,
@@ -377,7 +486,8 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                           .packages=c("MASS","MLEcens","Matrix","survival",
                                       "stats4","plyr"),
                           .export=c("surv_cl",
-                                    "gera_yh_effect2",
+                                    "gera_yh_effect2","gera_yh_effect_alt",
+                                    "f_cond_effect", "surv_cl_alt", "inverse_f",
                                     "gera_ksih_effect",
                                     "gera_kh_effect","log_vero_gamma",
                                     "gera_uh"),
@@ -386,10 +496,17 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
         theta_M <- a_M[1:compr_theta]
         beta_M <- a_M[(compr_theta + 1):(compr_alpha - 1)]
         gamma_M <- a_M[compr_alpha]
-        y <- as.numeric(gera_yh_effect2(left, right, delta,
-                                       cov_theta, cov_beta, grp,
-                                       theta_M, beta_M, gamma_M,
-                                       naalen_avg, dataset))
+        if(!ALT) {
+          y <- as.numeric(gera_yh_effect2(left, right, delta, cov_theta,
+                                          cov_beta, grp, theta_M,
+                                          beta_M, gamma_M,
+                                          naalen_avg, dataset))
+        } else {
+          y <- as.numeric(gera_yh_effect_alt(left, right, delta, cov_theta,
+                                             cov_beta, grp, theta_M,
+                                             beta_M, gamma_M,
+                                             naalen_avg, dataset))
+        }
         ksi <- gera_ksih_effect(y, dataset, delta,
                                 cov_theta, cov_beta, grp,
                                 theta_M, beta_M, gamma_M,
