@@ -249,7 +249,7 @@ f_cond_effect <- function(tempo, l, r,
                                       cov_theta, cov_beta, grp,
                                       naalen_mod, dataset)
   num <- s_cl_mod(tempo) - s_cl_mod(r)
-  den <- s_cl_mod - s_cl_mod(r)
+  den <- s_cl_mod(l) - s_cl_mod(r)
   return(as.numeric(1 - (num / den)))
 }
 
@@ -448,7 +448,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                 theta_M, beta_M,
                                 naalen_avg)
         k <- k_aux$k # vetorzao de k para algum h
-        ksi_geral <- k_aux$ksi # m efeitos de grupo, onde m = numero de grupos
+        ksi_geral <- k_aux$ksi # vetor de efeitos de grupo
         u <- gera_uh(y, k, dataset, right, delta, cov_beta, beta_M, naalen_avg) # checked!
 
         #Gamma Regression for w
