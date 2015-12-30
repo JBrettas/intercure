@@ -43,6 +43,11 @@ nelson_aalen_table <- function(data_set,
 aux_naalen <- function(tempos, naalen_f, par_cl = NULL) {
   z <- unique(sort(tempos))
   if (!is.null(par_cl)) {
+    if (!requireNamespace("snow", quietly = TRUE)) {
+      stop("The snow package is needed for parallel version
+           of inter_frailty or inter_frailty_cl. Please install it.",
+           call. = FALSE)
+    }
     vector_naalen <- snow::parSapply(par_cl, z, naalen_f)
   } else {
     vector_naalen <- sapply(z, naalen_f)
@@ -51,7 +56,6 @@ aux_naalen <- function(tempos, naalen_f, par_cl = NULL) {
   colnames(piece_aalen) <- c("time", "hazard")
   return(piece_aalen)
 }
-
 
 # Survival Function given x(0) , x(1), Theta, Beta
 # Note: Precision problems may occur on the linear predictors
@@ -250,7 +254,7 @@ inter_frailty <- function(dataset, left, right, delta,
     if ( (n + 1) %% 10 == 0 ) cat("Iteration:", (n + 1),"\n")
     #iter_time <- system.time({
     if(!is.null(par_cl)){
-      list_reg <- foreach(iterators::icount(M),
+      list_reg <- foreach::foreach(iterators::icount(M),
                           .packages=c("MASS","Matrix","survival"),
                           .export=c("surv_lam","inverse_lam_f", "gera_yh",
                                     "gera_kh", "gera_uh"),
@@ -288,7 +292,7 @@ inter_frailty <- function(dataset, left, right, delta,
         out
       }
     } else {
-      list_reg <- foreach(iterators::icount(M),
+      list_reg <- foreach::foreach(iterators::icount(M),
                           .packages=c("MASS","Matrix","survival"),
                           .export=c("surv_lam","inverse_lam_f", "gera_yh",
                                     "gera_kh", "gera_uh"),
@@ -346,7 +350,7 @@ inter_frailty <- function(dataset, left, right, delta,
 
     # Obtaining new Nelson-Aalen estimator for Cum. Hazard function
     if (!is.null(par_cl)) {
-      step_list <- foreach(h=1:M, .export="nelson_aalen_table",
+      step_list <- foreach::foreach(h=1:M, .export="nelson_aalen_table",
                            .inorder=F) %dopar% {
         V_NAalen <- nelson_aalen_table(dataset, y_nxm[h,],
                                        delta, beta_M[h,], cov_beta,
@@ -356,7 +360,7 @@ inter_frailty <- function(dataset, left, right, delta,
         step_list
       }
     } else {
-      step_list <- foreach(h=1:M, .export="nelson_aalen_table",
+      step_list <- foreach::foreach(h=1:M, .export="nelson_aalen_table",
                            .inorder=F) %do% {
         V_NAalen <- nelson_aalen_table(dataset, y_nxm[h,],
                                        delta, beta_M[h,], cov_beta,

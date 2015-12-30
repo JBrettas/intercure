@@ -414,7 +414,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
       cat("############################################################## Iteration:", (n + 1),"\n")
     #iter_time <- system.time({
     if(!is.null(par_cl)){
-      list_reg <- foreach(iterators::icount(M),
+      list_reg <- foreach::foreach(iterators::icount(M),
                           .packages=c("MASS","MLEcens","Matrix",
                                       "survival","stats4","plyr"),
                           .export=c("surv_cl",
@@ -482,7 +482,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
         out
       }
     } else {
-      list_reg <- foreach(iterators::icount(M),
+      list_reg <- foreach::foreach(iterators::icount(M),
                           .packages=c("MASS","MLEcens","Matrix","survival",
                                       "stats4","plyr"),
                           .export=c("surv_cl",
