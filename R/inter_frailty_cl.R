@@ -371,6 +371,19 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
           file=fileconn, append=T, sep="")
   }
 
+  # Checks delta
+  if(any(!(delta %in% c(0,1)))) stop("delta vector should contain 0 or 1 only")
+
+  # Check if right >= left
+  if(any(right < left)) stop("inserted left > right as input")
+
+  # Check that there are no negative times
+  if(any(left<0 | right<0)) stop("there are negative times as inputs on left or right vector")
+
+  # Check if cov is in dataset
+  if( !(cov_theta %in% names(dataset) )) stop("specified incidence covariate name not found on the dataset")
+  if( !(cov_beta %in% names(dataset) )) stop("specified latency covariate name not found on the dataset")
+
   #Initial values for y
   y_n_M <- k_n_M <- u_n_M <- ksi_n_M <- matrix(NA, nrow = M,
                                                ncol = nrow(dataset))

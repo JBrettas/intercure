@@ -272,6 +272,15 @@ inter_bch <- function(dataset, left, right,
       file=fileconn, append=T, sep="")
   }
 
+  # Check if right >= left
+  if(any(right < left)) stop("inserted left > right as input")
+
+  # Check that there are no negative times
+  if(any(left<0 | right<0)) stop("there are negative times as inputs on left or right vector")
+
+  # Check if cov is in dataset
+  if( !(cov %in% names(dataset) )) stop("specified covariate name not found on the dataset")
+
   # Specifying the covariates
   dataset <- as.data.frame(dataset)
   Z <- data.frame(1, dataset[,cov])
