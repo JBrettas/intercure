@@ -34,7 +34,7 @@ test_that("stops when covariate names are wrong", {
 # stops when negative times are found
 test_that("stops when negative times are found", {
   expect_error(inter_bch(data_test_frailty, -data_test_frailty$L, data_test_frailty$R, "xi1"))
-  L_neg <- data_test$L
+  L_neg <- data_test_frailty$L
   L_neg[1] <- -5
   expect_error(inter_bch(data_test_frailty, L_neg, data_test_frailty$R, "xi1"))
   expect_error(inter_bch(data_test_frailty, data_test_frailty$L, -data_test_frailty$R, "xi1"))
