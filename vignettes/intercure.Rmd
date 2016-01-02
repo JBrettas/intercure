@@ -88,7 +88,7 @@ sim_bch(10)
 
 ```{r, echo = FALSE}
 set.seed(3)
-pander::pander(sim_bch(10))
+knitr::kable(sim_bch(10), align = 'c')
 ```
 
 ### inter_bch function
@@ -169,7 +169,7 @@ sim_frailty(10)
 
 ```{r, echo = FALSE}
 set.seed(3)
-pander::pander(sim_frailty(10))
+knitr::kable(sim_frailty(10), align = 'c')
 ```
 
 
@@ -235,7 +235,7 @@ sim_frailty_cl(15, nclus = 3)
 
 ```{r, echo = FALSE}
 set.seed(3)
-pander::pander(sim_frailty_cl(15, nclus = 3))
+knitr::kable(sim_frailty_cl(15, nclus = 3), align = 'c')
 ```
 
 ### inter_frailty_cl function
