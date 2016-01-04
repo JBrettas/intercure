@@ -201,8 +201,8 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #'   reached.}
 #' @examples
 #' sample_set <- sim_frailty(100)
-#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 50)
-#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 10)
+#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1","xi2"), c("xi1","xi2"), M = 10, max_n = 3, burn_in = 1)
+#' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), M = 20, max_n = 30, burn_in = 10)
 #' @export
 inter_frailty <- function(dataset, left, right, delta,
                           cov_theta, cov_beta,
@@ -229,8 +229,8 @@ inter_frailty <- function(dataset, left, right, delta,
   if(any(left<0 | right<0)) stop("there are negative times as inputs on left or right vector")
 
   # Check if cov is in dataset
-  if( !(cov_theta %in% names(dataset) )) stop("specified incidence covariate name not found on the dataset")
-  if( !(cov_beta %in% names(dataset) )) stop("specified latency covariate name not found on the dataset")
+  if( any( !(cov_theta %in% names(dataset) )) ) stop("specified incidence covariate name not found on the dataset")
+  if( any( !(cov_beta %in% names(dataset) )) ) stop("specified latency covariate name not found on the dataset")
 
   # Initial values for y
   y_nxm <- u_nxm <- matrix(NA, nrow=M, ncol = nrow(dataset))
@@ -432,7 +432,7 @@ inter_frailty <- function(dataset, left, right, delta,
               not met.", file=fileconn, append=T, sep=" ")
         close(fileconn)
       }
-      cat("Warning: Convergence criteria not met.
+      cat("Convergence criteria not met.
           Estimates given for max_n=", max_n)
       cat("\n")
       break

@@ -348,6 +348,10 @@ gera_yh_effect_alt <- function(left, right, delta, cov_theta, cov_beta,
 #'   \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
 #'   stopped for a non-convergence criteria. Assumes 0 when convergence is
 #'   reached.}
+#' @examples
+#' set.seed(3)
+#' sample_set <- sim_frailty_cl(100, nclus = 3)
+#' inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
 #' @export
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
@@ -381,8 +385,8 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
   if(any(left<0 | right<0)) stop("there are negative times as inputs on left or right vector")
 
   # Check if cov is in dataset
-  if( !(cov_theta %in% names(dataset) )) stop("specified incidence covariate name not found on the dataset")
-  if( !(cov_beta %in% names(dataset) )) stop("specified latency covariate name not found on the dataset")
+  if( any( !(cov_theta %in% names(dataset) )) ) stop("specified incidence covariate name not found on the dataset")
+  if( any( !(cov_beta %in% names(dataset) )) ) stop("specified latency covariate name not found on the dataset")
 
   #Initial values for y
   y_n_M <- k_n_M <- u_n_M <- ksi_n_M <- matrix(NA, nrow = M,
@@ -660,7 +664,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
         write("\nWarning: Iteration Number achieved but
               convergence criteria not met.",file=fileconn,append=T, sep=" ")
       }
-      cat("\nWarning: Convergence criteria not met. Estimates given
+      cat("\n Convergence criteria not met. Estimates given
           for max_n=", max_n)
       cat("\n")
       break

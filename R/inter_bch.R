@@ -242,7 +242,7 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
 #'   the maximization process. Default value set to 10.
 #' @param crit_theta The effects minimum error for convergence purposes.
 #' @param crit_p Minimum error of the non-parametric cumulative distribution function.
-#' @param n_int Maximum number of iterations of the ECM algorithm.
+#' @param max_n Maximum number of iterations of the ECM algorithm.
 #' @param output_files Boolean indicating if text outputs for the estimates and
 #' variances should be generated.
 #' @return The \code{inter_bch} function returns an list containing the
@@ -261,7 +261,7 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
 inter_bch <- function(dataset, left, right,
                       cov, sigma = 10,
                       crit_theta = 0.001, crit_p=0.005,
-                      n_int = 100, output_files = FALSE){
+                      max_n = 100, output_files = FALSE){
   # Initializing output files
   if (output_files) {
     est_file_name <- paste("BCH_Estimates.txt", sep="")
@@ -279,7 +279,7 @@ inter_bch <- function(dataset, left, right,
   if(any(left<0 | right<0)) stop("there are negative times as inputs on left or right vector")
 
   # Check if cov is in dataset
-  if( !(cov %in% names(dataset) )) stop("specified covariate name not found on the dataset")
+  if( any( !(cov %in% names(dataset) )) ) stop("specified covariate name not found on the dataset")
 
   # Specifying the covariates
   dataset <- as.data.frame(dataset)
@@ -366,12 +366,13 @@ inter_bch <- function(dataset, left, right,
     it <- it + 1
 
     # Check if reached iteration limit defined by user
-    if (it >= n_int) {
+    if (it >= max_n) {
       if (output_files) {
         write("WARNING: CONVERGENCE NOT REACHED",
               file = fileconn, append=T, sep=" ")
       }
-      cat("\nWARNING: CONVERGENCE NOT REACHED FOR #IT=", n_int)
+      cat("\n Convergence criteria not met.
+          Estimates given for max_n=", max_n)
       break
     }
   }
@@ -379,7 +380,7 @@ inter_bch <- function(dataset, left, right,
   if (output_files) close(fileconn)
 
   # Check if reached the it limit
-  crit_stop <- as.numeric(it >= n_int)
+  crit_stop <- as.numeric(it >= max_n)
 
   # Outputs an list with useful metrics
   return(list("par" = theta_k, "p" = p, "mcov"=theta_var, "stop_c" = crit_stop))

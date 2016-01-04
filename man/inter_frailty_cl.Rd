@@ -59,4 +59,9 @@ The \code{inter_frailty_cl} function returns an list containing the
 a dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if
 a stop criteria ended the process.
 }
+\examples{
+set.seed(3)
+sample_set <- sim_frailty_cl(100, nclus = 3)
+inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
+}
 

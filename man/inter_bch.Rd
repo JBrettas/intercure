@@ -5,7 +5,7 @@
 \title{Fits promotion time cure rate model for interval censored data}
 \usage{
 inter_bch(dataset, left, right, cov, sigma = 10, crit_theta = 0.001,
-  crit_p = 0.005, n_int = 100, output_files = FALSE)
+  crit_p = 0.005, max_n = 100, output_files = FALSE)
 }
 \arguments{
 \item{dataset}{Dataset used to fit the model.}
@@ -24,7 +24,7 @@ the maximization process. Default value set to 10.}
 
 \item{crit_p}{Minimum error of the non-parametric cumulative distribution function.}
 
-\item{n_int}{Maximum number of iterations of the ECM algorithm.}
+\item{max_n}{Maximum number of iterations of the ECM algorithm.}
 
 \item{output_files}{Boolean indicating if text outputs for the estimates and
 variances should be generated.}
