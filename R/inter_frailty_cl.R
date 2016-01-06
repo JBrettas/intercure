@@ -256,8 +256,7 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
                              par_cl = NULL,
-                             burn_in=50, output_files = FALSE,
-                             ALT = FALSE) {
+                             burn_in=50, output_files = FALSE) {
   # arranges dataset by clusters
   order_aux <- order(grp)
   dataset <- as.data.frame(dataset[order_aux,])
