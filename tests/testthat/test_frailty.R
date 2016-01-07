@@ -25,17 +25,17 @@ test_that("program works for different covariates for each predictor", {
 })
 
 # parallelism
-cl <- snow::makeCluster(2,type="SOCK")
-doSNOW::registerDoSNOW(cl)
-fit2 <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi1"),
-                     M = 10, max_n = 4, burn_in = 1, par_cl = cl))
-
-test_that("parallel mode is working", {
-  expect_is(fit2$par,"numeric")
-  expect_is(fit2$stop_c,"numeric")
-})
-
-snow::stopCluster.default(cl)
+# cl <- snow::makeCluster(2,type="SOCK")
+# doSNOW::registerDoSNOW(cl)
+# fit2 <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi1"),
+#                      M = 10, max_n = 4, burn_in = 1, par_cl = cl))
+#
+# test_that("parallel mode is working", {
+#   expect_is(fit2$par,"numeric")
+#   expect_is(fit2$stop_c,"numeric")
+# })
+#
+# snow::stopCluster.default(cl)
 
 # M = 1 gives error
 test_that("M = 1 gives error", {
