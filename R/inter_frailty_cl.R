@@ -97,11 +97,11 @@ surv_cl <- function(tempo, i, j,
 
   num <- (etas_i[j] / 2) *
     (1 - (1 / (2 * mus_i[j] * naalen_mod(tempo, partial_l[j], partial_r[j]) + 1)))
-  den <- w + sum( (etas_i[1:(j - 1)] / 2) *
+  den <- w + sum(base_cl$delta[1:(j - 1)] * (etas_i[1:(j - 1)] / 2) *
                    (1 - (1 / (2 * mus_i[1:(j - 1)] *
-                                (sapply(partial_times[1:(j - 1)],
-                                        nelson_aalen_function)) +
-                                1))))
+                                (mapply(naalen_mod, partial_times[1:(j - 1)],
+                                        partial_l[1:(j - 1)], partial_r[1:(j - 1)])) +
+                                1))), na.rm = TRUE)
   surv_j_cl_i <- (1 + num / den) ^ (-w - sum(base_cl$delta[1:(j - 1)]))
   if (is.nan(surv_j_cl_i) | surv_j_cl_i == -Inf) {
     stop("Estimated survival is NaN or -Inf")
@@ -120,9 +120,9 @@ gera_y_cl <- function(u_gen, l, r,
   naalen_mod <- function(t_gen, l_i, r_i) {
     res <- (nelson_aalen_function(l_i) * (r_i - t_gen) +
        nelson_aalen_function(r_i) * (t_gen - l_i)) / (r_i - l_i)
-    if(res < 0 | is.nan(res)) {
-      stop ("naalen_mod < 0 or NaN")
-    }
+#     if(res < 0 ) { # | is.nan(res)
+#       stop ("naalen_mod < 0") # or NaN
+#     }
     res
   }
 
@@ -151,11 +151,12 @@ gera_y_cl <- function(u_gen, l, r,
   if (j ==1) {
     k_2 <- (etas_i[1] / ((etas_i[1] - (k_1^(-1/w) - 1) * 2 * w) * 2 * mus_i[1])) - 1/(2 * mus_i[1])
   } else {
-    k_1_5 <- (k_1 ^ ( 1 / (-w - sum(base_cl$delta[1:(j - 1)]) ) ) - 1)*(w + sum( (etas_i[1:(j - 1)] / 2) *
+    k_1_5 <- (k_1 ^ ( 1 / (-w - sum(base_cl$delta[1:(j - 1)]) ) ) - 1)*(w + sum(base_cl$delta[1:(j - 1)] * (etas_i[1:(j - 1)] / 2) *
                                                                                    (1 - (1 / (2 * mus_i[1:(j - 1)] *
-                                                                                                (sapply(partial_times[1:(j - 1)],
-                                                                                                        nelson_aalen_function)) +
-                                                                                                1)))))
+                                                                                                (mapply(naalen_mod, partial_times[1:(j - 1)],
+                                                                                                        partial_l[1:(j - 1)],
+                                                                                                        partial_r[1:(j - 1)])) +
+                                                                                                1))), na.rm = TRUE))
     k_2 <- (etas_i[j] / ((etas_i[j] - 2*k_1_5)*2*mus_i[j])) - 1/(2*mus_i[j])
   }
 
