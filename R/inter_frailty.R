@@ -286,17 +286,14 @@ inter_frailty <- function(dataset, left, right, delta,
         o_set <- k * 0 - log(2)
         expression_theta <- paste("dataset$", cov_theta[1:length(cov_theta)],
                                   sep = "", collapse="+")
-        eq_theta <- paste("fit_theta <- glm(k~", expression_theta,
-                          "+ offset(o_set), family=poisson)")
-        eval(parse(text = eq_theta))
+        formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
+        fit_theta <- glm(formula_theta, family = poisson)
 
         # Cox Regression for Beta
         expression_beta <- paste("dataset$", cov_beta[1:length(cov_beta)] ,
                                  sep = "", collapse="+")
-        eq_beta <- paste("fit_beta <- coxph(Surv(y,delta)~",
-                         expression_beta," + offset(ifelse(log(u)==-Inf,-200,
-                         log(u))), method='breslow')")
-        eval(parse(text = eq_beta))
+        formula_beta <- stats::formula(paste0("Surv(y,delta)~",expression_beta,"+ offset(ifelse(log(u)==-Inf, -200,log(u)))"))
+        fit_beta <- survival::coxph(formula_beta, method = 'breslow')
 
         # Outputs of Parallel Computing
         out <- list(fit_theta$coef, vcov(fit_theta),
@@ -325,17 +322,15 @@ inter_frailty <- function(dataset, left, right, delta,
         o_set <- k * 0 - log(2)
         expression_theta <- paste("dataset$", cov_theta[1:length(cov_theta)],
                                   sep = "", collapse="+")
-        eq_theta <- paste("fit_theta <- stats::glm(k~", expression_theta,
-                          "+offset(o_set),family=poisson)")
-        eval(parse(text = eq_theta))
+        formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
+        fit_theta <- glm(formula_theta, family = poisson)
 
         # Cox Regression for Beta
         expression_beta <- paste("dataset$", cov_beta[1:length(cov_beta)] ,
                                  sep = "", collapse="+")
-        eq_beta <- paste("fit_beta <- survival::coxph(Surv(y,delta)~",
-                         expression_beta," + offset(ifelse(log(u)==-Inf,
-                         -200,log(u))), method='breslow')")
-        eval(parse(text = eq_beta))
+        formula_beta <- stats::formula(paste0("Surv(y,delta)~",expression_beta,"+offset(ifelse(log(u)==-Inf, -200,log(u)))"))
+        fit_beta <- survival::coxph(formula_beta, method = 'breslow')
+
 
         # Outputs of Parallel Computing
         out <- list(fit_theta$coef, vcov(fit_theta),
