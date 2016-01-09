@@ -217,9 +217,9 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 #' Cure rate frailty model for interval censored clustered data
 #'
 #' \code{inter_frailty_cl} returns a list with the estimated parameters
-#' \code{par} and their covariance matrix \code{mcov}. The list also contains
-#' a dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if
-#' a stop criteria ended the process.
+#' \code{par} and their covariance matrix \code{mcov}. The list also contains a
+#' dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if a
+#' stop criteria ended the process.
 #'
 #' @param dataset Dataset used to fit the model.
 #' @param left Vector containing the last check times before event.
@@ -234,25 +234,23 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 #'   (Asymptotic Normal Data Augmentation) algorithm.
 #' @param b Parameter for initial theta and beta variances.
 #' @param tol Numeric for tolerance of convergence.
-#' @param max_n Maximum number of algorithm's iterations without the burn
-#'   in.
+#' @param max_n Maximum number of algorithm's iterations without the burn in.
 #' @param par_cl Registered SOCK cluster for parallel process. If NULL (default)
 #'   the program loops are executed sequentially.
 #' @param burn_in Number of burn in iterations.
 #' @param output_files Boolean indicating if text outputs for the estimates and
-#' variances should be generated.
+#'   variances should be generated.
 #' @return The \code{inter_frailty_cl} function returns an list containing the
-#'   following outputs:
-#'   \item{\code{par}}{estimates of theta and beta parameters.}
-#'   \item{\code{mcov}}{estimates for the covariance matrix of theta and beta
-#'   parameters.}
-#'   \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
-#'   stopped for a non-convergence criteria. Assumes 0 when convergence is
-#'   reached.}
+#'   following outputs: \item{\code{par}}{estimates of theta and beta
+#'   parameters.} \item{\code{mcov}}{estimates for the covariance matrix of
+#'   theta and beta parameters.} \item{\code{stop_c}}{stop criteria indicator
+#'   assuming 1 when process is stopped for a non-convergence criteria. Assumes
+#'   0 when convergence is reached.}
 #' @examples
 #' set.seed(3)
 #' sample_set <- sim_frailty_cl(100, nclus = 3)
-#' inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
+#' inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta,
+#' c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
 #' @export
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
