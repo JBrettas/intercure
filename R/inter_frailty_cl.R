@@ -23,7 +23,7 @@ gera_kh_effect <- function(y_h, ksi_h, data_set, delta,
                            cov_theta, cov_beta, grp, theta, beta,
                            nelson_aalen_function) {
   corresp <- data.frame(clu = unique(grp), effect = ksi_h)
-  ksi_ij <- plyr::join(data.frame(clu = grp), corresp, by = "clu")[,2]
+  ksi_ij <- corresp$effect[base::match(grp, corresp$clu)]
   intercepto <- 1
   xi_0 <- cbind(intercepto, data_set[,cov_theta])
   xi_1 <- data_set[,cov_beta]
