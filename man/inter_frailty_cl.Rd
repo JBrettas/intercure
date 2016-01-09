@@ -32,8 +32,7 @@ predictor associated with the hazard function.}
 
 \item{tol}{Numeric for tolerance of convergence.}
 
-\item{max_n}{Maximum number of algorithm's iterations without the burn
-in.}
+\item{max_n}{Maximum number of algorithm's iterations without the burn in.}
 
 \item{par_cl}{Registered SOCK cluster for parallel process. If NULL (default)
 the program loops are executed sequentially.}
@@ -45,23 +44,22 @@ variances should be generated.}
 }
 \value{
 The \code{inter_frailty_cl} function returns an list containing the
-  following outputs:
-  \item{\code{par}}{estimates of theta and beta parameters.}
-  \item{\code{mcov}}{estimates for the covariance matrix of theta and beta
-  parameters.}
-  \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
-  stopped for a non-convergence criteria. Assumes 0 when convergence is
-  reached.}
+  following outputs: \item{\code{par}}{estimates of theta and beta
+  parameters.} \item{\code{mcov}}{estimates for the covariance matrix of
+  theta and beta parameters.} \item{\code{stop_c}}{stop criteria indicator
+  assuming 1 when process is stopped for a non-convergence criteria. Assumes
+  0 when convergence is reached.}
 }
 \description{
 \code{inter_frailty_cl} returns a list with the estimated parameters
-\code{par} and their covariance matrix \code{mcov}. The list also contains
-a dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if
-a stop criteria ended the process.
+\code{par} and their covariance matrix \code{mcov}. The list also contains a
+dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if a
+stop criteria ended the process.
 }
 \examples{
 set.seed(3)
 sample_set <- sim_frailty_cl(100, nclus = 3)
-inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta, c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
+inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta,
+c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
 }
 
