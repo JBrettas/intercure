@@ -202,9 +202,9 @@ convergence_lam <- function(alpha_new, alpha_old, tol = 0.001) {
 #' @examples
 #' sample_set <- sim_frailty(100)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-#' c("xi1","xi2"), c("xi1","xi2"), M = 10, max_n = 3, burn_in = 1)
+#' c("xi1","xi2"), c("xi1","xi2"), M = 10, max_n = 30, burn_in = 20)
 #' inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-#' c("xi1"), c("xi2"), M = 20, max_n = 30, burn_in = 10)
+#' c("xi1"), c("xi2"), M = 20, max_n = 40, burn_in = 10)
 #' @export
 inter_frailty <- function(dataset, left, right, delta,
                           cov_theta, cov_beta,

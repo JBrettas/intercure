@@ -60,6 +60,7 @@ stop criteria ended the process.
 set.seed(3)
 sample_set <- sim_frailty_cl(100, nclus = 3)
 inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
+c("xi1", "xi2"), c("xi1", "xi2"), grp = sample_set$clus, M = 20,
+max_n = 30, burn_in = 10)
 }
 

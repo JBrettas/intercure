@@ -47,7 +47,7 @@ stop criteria ended the process.
 }
 \examples{
 sample_set <- sim_bch(100)
-inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1","xi2"))
-inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1"))
+fit1 <- inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1","xi2"))
+fit2 <- inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1"))
 }
 

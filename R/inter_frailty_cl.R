@@ -250,7 +250,8 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 #' set.seed(3)
 #' sample_set <- sim_frailty_cl(100, nclus = 3)
 #' inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-#' c("xi1"), c("xi2"), grp = sample_set$clus, M = 20, max_n = 10, burn_in = 5)
+#' c("xi1", "xi2"), c("xi1", "xi2"), grp = sample_set$clus, M = 20,
+#' max_n = 30, burn_in = 10)
 #' @export
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
