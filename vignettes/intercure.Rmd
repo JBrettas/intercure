@@ -244,6 +244,7 @@ The `inter_frailty_cl` function uses the algorithm proposed on @lam2014 to fit a
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 # hypothetical interval censored dataset with a cure fraction
+set.seed(300)
 cureset <- sim_frailty_cl(150, nclus = 3)
 
 # allocates the estimated parameters and covariance matrix

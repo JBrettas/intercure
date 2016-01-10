@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 ^Lam_Estimates\.txt$
 ^Lam_Variances\.txt$
+^\.travis\.yml$
