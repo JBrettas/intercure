@@ -5,3 +5,5 @@
 ^\.travis\.yml$
 ^README\.Rmd$
 ^README-.*\.png$
+^README\.md$
+^cran-comments\.md$
