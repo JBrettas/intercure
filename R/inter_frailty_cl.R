@@ -24,8 +24,8 @@ gera_kh_effect <- function(y_h, ksi_h, data_set, delta,
                            nelson_aalen_function) {
   corresp <- data.frame(clu = unique(grp), effect = ksi_h)
   ksi_ij <- corresp$effect[base::match(grp, corresp$clu)]
-  intercepto <- 1
-  xi_0 <- cbind(intercepto, data_set[,cov_theta])
+  intercept <- 1
+  xi_0 <- cbind(intercept, data_set[,cov_theta])
   xi_1 <- data_set[,cov_beta]
   num <- exp(as.vector(theta %*% t (xi_0))) * ksi_ij
   den <- 2 + 4 * sapply(y_h, nelson_aalen_function) *
@@ -47,8 +47,8 @@ log_vero_gamma <- function(gamma_par, ksi_h){
 # Log-likelihood of theta given y_h, k_h, covariates and theta
 log_vero_theta <- function(theta, cov_theta, y_h, k_h, data_set){
   total <- 0
-  intercepto <- 1
-  cov <- cbind(intercepto, data_set[,cov_theta])
+  intercept <- 1
+  cov <- cbind(intercept, data_set[,cov_theta])
   total <- sum((-exp(theta %*% t(cov)) / 2) + k_h * (theta %*% t(cov)))
   return(total)
 }
@@ -304,7 +304,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
   compr_beta <- length(cov_beta)
   compr_alpha <- compr_theta + compr_beta + 1
   a_M <- matrix(NA, nrow = M, ncol = compr_alpha)
-  lbls <- c("intercepto", cov_theta, cov_beta, "log_w")
+  lbls <- c("intercept", cov_theta, cov_beta, "log_w")
   colnames(a_M) <- lbls
   alpha <- c(1:compr_alpha) * 0
   sigma_alpha <- b * diag(compr_alpha)

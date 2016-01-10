@@ -56,6 +56,18 @@ references:
   type: article-journal
   issued:
     year: 2014    
+    
+- id: Siegel79
+  title: The noncentral chi-squared distribution with zero degrees of freedom and testing for uniformity
+  author:
+  - family: Siegel
+    given: Andrew F.
+  container-title: Biometrika
+  volume: 66
+  page: 381-386
+  type: article-journal
+  issued:
+    year: 1979        
 ---
 
 The `intercure` package provides implementations of semiparametric cure rate estimators for interval censored data using the bounded cumulative hazard and the frailty models. For clustered datasets, an extension of the frailty model proposed on @lam2014 is also implemented to incorporate the group effects. This package also provides functions to generate interval censored datasets with a cure fraction using different specifications. The readers should keep in mind that this vignette focuses only on how to use the estimators with this package. Theorical details and a full description of each algorithm can be encountered on the cited articles.
@@ -72,9 +84,9 @@ $$S(t | \boldsymbol{Z}) = P(T \geq t | \boldsymbol{Z}) = \exp(-e^{\alpha + \bold
 
 where $F^{*}(t)$ is a completely unknown regular distribution function, $\boldsymbol{Z}$ is the covariate vector, $\alpha$ is the intercept to be estimated and $\boldsymbol{\beta}$ is the vector of effects associated to $\boldsymbol{Z}$. Taking the limit of the expression above gives $\exp(-e^{\alpha + \boldsymbol{\beta}'\boldsymbol(Z)})$, the probability of being cured.
 
-In this specification, $F^{*}(t)$ is related to the promotion time of each of the $N$ tumorous cells, as well known in literature for this motivation. For interval censored data, the proposed semiparametric model uses the non-parametric Turnbull estimator for this component, restricting the search of the distribution function estimate to an equivalence class.
+In this specification, $F^{*}(t)$ is related to the promotion time of each of $N$ tumorous cells, as well known in literature for this motivation. For interval censored data, the proposed semiparametric model uses the non-parametric Turnbull estimator for this component, restricting the search of the distribution function estimate to an equivalence class.
 
-In general, the estimation proccess is based on the ECM algorithm, with the authors proposing the use of convex optimization techniques to deal with the high dimensionality problem implied by the use of the equivalence classes. The algorithm, based on a C routine implemented by the original authors, is fully described on @shen2009. The next sections provides examples generating data with the promotion time specification and fitting the proposed model.
+In general, the estimation proccess is based on the ECM algorithm, with the authors proposing the use of convex optimization techniques to deal with the high dimensionality problem implied by the vector of probabilities to be estimated. The algorithm, based on a C routine implemented by the original authors, is fully described on @shen2009. The next sections provides examples generating data with the promotion time specification and fitting the proposed model.
 
 ### sim_bch function
 
@@ -87,9 +99,11 @@ sim_bch(10)
 ```
 
 ```{r, echo = FALSE}
-set.seed(3)
+set.seed(2)
 knitr::kable(sim_bch(10), align = 'c')
 ```
+
+In particular, the `N_L` column of the output contains, for each observation, the number of latent variables which the minimum represents the time of the event, as the number of tumorous cells on the original motivation.
 
 ### inter_bch function
 
@@ -99,6 +113,7 @@ The use of the `inter_bch` function is shown below:
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 # hypothetical interval censored dataset with a cure fraction
+set.seed(2)
 cureset <- sim_bch(100)
 
 # allocates the estimated parameters and covariance matrix
@@ -141,11 +156,11 @@ W_{1i} + W_{2i} + \dotsb + W_{k_i i} & \mbox{if } k_i > 0. \\
 \end{array}
 \right.$$
 
-The random variable $U_i$, defined this way, can be seen as an extension of the non-central Chi-squared distribution proposed on by Siegel (1979). It's assumed, for estimation, that $K_i \sim \mbox{Poisson} (e^{\boldsymbol{\theta}'\boldsymbol{x^{(0)}}}/2)$.
+The random variable $U_i$, defined this way, can be seen as an extension of the non-central Chi-squared distribution proposed on by @Siegel79. It's assumed, for estimation, that $K_i \sim \mbox{Poisson} (e^{\boldsymbol{\theta}'\boldsymbol{x^{(0)}}}/2)$.
 
-For estimation, the model uses multiple imputation techniques (asymptotic normal data augmentation) combined with maximum likelihood estimation for the complete dataset. Each iteration of the algorithm are based on $M$ generated completed datasets using the estimates from the previous iteration. Higher values of $M$ implies on higher precision with the cost of a more intensive computational proccess.
+For estimation, the model uses multiple imputation techniques (asymptotic normal data augmentation) combined with maximum likelihood estimation for the complete dataset. Each iteration of the algorithm is based on $M$ generated completed datasets using the estimates from the previous iteration. Higher values of $M$ implies on higher precision with the cost of a more intensive computational proccess.
 
-The times to events are obtained with the conditional distribution of $T$ given the interval censoring and all the augmented data, using the Nelson-Aalen estimator to obtain the cumulative hazard. The algorithm steps and a full description of the model are given on @lam2013.
+The times to the events are obtained with the conditional distribution of $T$ given the interval censoring and all the augmented data, using the Nelson-Aalen estimator to obtain the cumulative hazard. The algorithm steps and a full description of the model are given on @lam2013.
 
 Based on the original paper, taking the limit of $t \rightarrow \infty$ for the individual $i$ survival function, we have:
 
@@ -179,13 +194,14 @@ From a interval censored dataset possibly containing a cure fraction (it's impor
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 # hypothetical interval censored dataset with a cure fraction
+set.seed(2)
 cureset <- sim_frailty(100)
 
 # allocates the estimated parameters and covariance matrix
 output <- inter_frailty(cureset, 
                         cureset$L, cureset$R, cureset$delta, 
                         c("xi1", "xi2"), c("xi1", "xi2"),
-                        M = 10)
+                        M = 10, max_n = 30, burn_in = 10)
 ```
 
 The estimated parameters are:
@@ -234,9 +250,11 @@ sim_frailty_cl(15, nclus = 3)
 ```
 
 ```{r, echo = FALSE}
-set.seed(11)
+set.seed(2)
 knitr::kable(sim_frailty_cl(15, nclus = 3), align = 'c')
 ```
+
+The `clus` column of the dataset generated by `sim_frailty_cl` contains the identifications of each generated cluster.
 
 ### inter_frailty_cl function
 
@@ -244,14 +262,15 @@ The `inter_frailty_cl` function uses the algorithm proposed on @lam2014 to fit a
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 # hypothetical interval censored dataset with a cure fraction
-set.seed(300)
-cureset <- sim_frailty_cl(150, nclus = 3)
+set.seed(2)
+cureset <- sim_frailty_cl(120, nclus = 3)
 
 # allocates the estimated parameters and covariance matrix
 output <- inter_frailty_cl(cureset, 
                         cureset$L, cureset$R, cureset$delta, 
                         c("xi1", "xi2"), c("xi1", "xi2"),
-                        grp = cureset$clus, M = 50)
+                        grp = cureset$clus, M = 30, max_n = 30,
+                        burn_in = 10)
 ```
 
 The estimated parameters are:
