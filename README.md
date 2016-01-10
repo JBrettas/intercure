@@ -11,9 +11,21 @@ Two models for interval censored data are considered on this package: the bounde
 Functions
 ---------
 
-To fit a cure rate model: \* inter\_bch \* inter\_frailty \* inter\_frailty\_cl
+To fit a cure rate model:
 
-To generate datasets: \* sim\_bch \* sim\_frailty \* sim\_frailty\_cl
+-   inter\_bch
+
+-   inter\_frailty
+
+-   inter\_frailty\_cl
+
+To generate datasets:
+
+-   sim\_bch
+
+-   sim\_frailty
+
+-   sim\_frailty\_cl
 
 References
 ----------
