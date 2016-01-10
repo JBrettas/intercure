@@ -97,7 +97,7 @@ To fit a cure rate model for a interval censored dataset using the promotion tim
 
 The use of the `inter_bch` function is shown below:
 
-```{r, message = FALSE, warning = FALSE, results = 'hide', cache = TRUE}
+```{r, message = FALSE, warning = FALSE, results = 'hide'}
 # hypothetical interval censored dataset with a cure fraction
 cureset <- sim_bch(100)
 
@@ -234,7 +234,7 @@ sim_frailty_cl(15, nclus = 3)
 ```
 
 ```{r, echo = FALSE}
-set.seed(3)
+set.seed(11)
 knitr::kable(sim_frailty_cl(15, nclus = 3), align = 'c')
 ```
 
@@ -242,7 +242,7 @@ knitr::kable(sim_frailty_cl(15, nclus = 3), align = 'c')
 
 The `inter_frailty_cl` function uses the algorithm proposed on @lam2014 to fit a cure rate model on clustered interval censored data. The input parameters are the same as the `inter_frailty` function, with exception of `grp`, a vector identifying the cluster of each observation.
 
-```{r, message = FALSE, warning = FALSE, results = 'hide', cache = TRUE}
+```{r, message = FALSE, warning = FALSE, results = 'hide'}
 # hypothetical interval censored dataset with a cure fraction
 cureset <- sim_frailty_cl(150, nclus = 3)
 
