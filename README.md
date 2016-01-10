@@ -38,7 +38,7 @@ Click [here](http://rpubs.com/JBrettas/howtointercure) for a tutorial on how to 
 Special thanks
 --------------
 
-My greatest thanks goes to Professor Lam, who gave me help on theorical details of the frailty model and its implementation. Also, my special thanks to Professor Shen, for all the answered doubts and for sharing the original C routine. And of course to Professor Tunes, who oriented me on my master's degree.
+My greatest thanks goes to Professor Lam, who gave me help on theorical details of the frailty model and its implementation. Also, my special thanks to Professor Shen, for all the answered doubts and for sharing the original C routine. And of course to Professor Tunes, who greatly oriented me on my master's degree.
 
 References
 ----------
