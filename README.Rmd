@@ -1,0 +1,86 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+
+---
+references:
+- id: shen2009
+  title: A Semiparametric Regression Cure Model for Interval-Censored Data
+  author:
+  - family: Shen
+    given: Yu
+  - family: Hao
+    given: Liu
+  container-title: Journal of the American Statistical Association
+  volume: 104
+  issue: 487
+  page: 1168-1178
+  type: article-journal
+  issued:
+    year: 2009
+    
+- id: lam2013
+  title: A semiparametric cure model for interval-censored data
+  author:
+  - family: Lam
+    given: Kwok Fai
+  - family: Wong
+    given: Kin Yau
+  - family: Zhou
+    given: Feifei
+  container-title: Biometrical Journal
+  volume: 55
+  issue: 5
+  page: 771-788
+  type: article-journal
+  issued:
+    year: 2013
+    
+- id: lam2014
+  title: Semiparametric analysis of clustered interval-censored survival data with a cure fraction
+  author:
+  - family: Lam
+    given: Kwok Fai
+  - family: Wong
+    given: Kin Yau
+  container-title: Computational Statistics and Data Analysis
+  volume: 79
+  page: 165-174
+  type: article-journal
+  issued:
+    year: 2014    
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# intercure
+
+[![Build Status](https://travis-ci.org/JBrettas/intercure.svg?branch=master)](https://travis-ci.org/JBrettas/intercure)
+
+The intercure package provides R implementations for different cure rate models to interval censored data. The goal is to estimate the effects of each given covariate using different specifications and computing the estimated cure fraction with it. For simulation and illustrative examples, the package also provides functions to generate a dataset using one of the cure rate specification. 
+
+Two models for interval censored data are considered on this package: the bounded cumulative hazard model proposed on @shen2009; the frailty model proposed on @lam2013, with its extension to clustered data presented on @lam2014.
+
+## Functions
+
+To fit a cure rate model:
+* inter_bch
+* inter_frailty
+* inter_frailty_cl
+
+To generate datasets:
+* sim_bch
+* sim_frailty
+* sim_frailty_cl
+
+## References

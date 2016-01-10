@@ -3,3 +3,5 @@
 ^Lam_Estimates\.txt$
 ^Lam_Variances\.txt$
 ^\.travis\.yml$
+^README\.Rmd$
+^README-.*\.png$
