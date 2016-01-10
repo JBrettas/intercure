@@ -23,17 +23,18 @@
 sim_bch <- function(N, theta = c(1, 0.5, 0),
                     lambda = 1, A = 5, B = 15, prob = 0.5){
   intercept <- 1
-  xi1 <- rbinom(N, 1, prob)
-  xi2 <- rnorm(N)
+  xi1 <- stats::rbinom(N, 1, prob)
+  xi2 <- stats::rnorm(N)
   X <- data.frame(intercept, xi1, xi2)
   lambda_pois <- as.numeric(exp(theta %*% t(X)))
-  N_L <- rpois(N, lambda_pois)
-  a <- runif(N)
+  N_L <- stats::rpois(N, lambda_pois)
+  a <- stats::runif(N)
   C <- cbind(A,a * B)
   C <- C[,1] * (C[,1] <= C[,2]) + C[,2] * (C[,1] > C[,2])
   T <- c(1:N) * NA
   for (i in 1:N) {
-    T[i] <- ifelse(N_L[i] > 0, min(rexp(N_L[i], lambda)), Inf)
+    T[i] <- ifelse(N_L[i] > 0, min(stats::rexp(N_L[i],
+                                               lambda)), Inf)
   }
   delta <- ifelse(T <= C,1,0)
   Z <- ifelse(T <= C, T, C)
@@ -45,12 +46,12 @@ sim_bch <- function(N, theta = c(1, 0.5, 0),
     }
     else{
       L[i] <- 0
-      add  <- runif(1, 0.1, 0.5)
+      add  <- stats::runif(1, 0.1, 0.5)
       R[i] <- add
       check <- (L[i] <= Z[i] & Z[i] < R[i])
       while(!check){
         L[i] <- L[i] + add
-        add <- runif(1, 0.1, 0.5)
+        add <- stats::runif(1, 0.1, 0.5)
         R[i] <- R[i] + add
         check <- (L[i] <= Z[i] & Z[i] < R[i])
       }

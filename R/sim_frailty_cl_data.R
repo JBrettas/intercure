@@ -28,31 +28,31 @@ sim_frailty_cl <- function(N, theta = c(-1,1,0),
                         prob = 0.5,
                         nclus = 2,
                         w = exp(-0.5)) {
-  u <- runif(N)
-  a <- runif(N)
+  u <- stats::runif(N)
+  a <- stats::runif(N)
   C <- cbind(A, a * B)
   C <- C[,1] * (C[,1] <= C[,2]) + C[,2] * (C[,1] > C[,2])
   intercept <- 1
-  xi1 <- rbinom(N,1,prob)
-  xi2 <- rnorm(N)
+  xi1 <- stats::rbinom(N,1,prob)
+  xi2 <- stats::rnorm(N)
   cov_theta <- data.frame(intercept, xi1, xi2)
   cov_beta <- data.frame(xi1, xi2)
   clus <- sample(1:nclus, N, replace=TRUE,
                  prob = rep(1/nclus, nclus))
   clus <- as.character(clus)
-  Ksis <- rgamma(nclus, shape = w, rate = w)
+  Ksis <- stats::rgamma(nclus, shape = w, rate = w)
   maptab <- data.frame(clus = 1:nclus, value = Ksis)
   maptab$clus <- as.character(maptab$clus)
   clus_effect <- maptab$value[match(clus, maptab$clus)]
   eta <- exp(as.vector(theta %*% t(cov_theta)))
-  K_vector <- rpois(N, (eta*clus_effect) / 2)
+  K_vector <- stats::rpois(N, (eta*clus_effect) / 2)
   U_vector <- K_vector * NA
   for(i in 1:length(K_vector)) {
     if(K_vector[i] == 0) U_vector[i] <- 0
     else{
       U_vector[i] <- 0
       for (j in 1:K_vector[i])
-        U_vector[i] <- U_vector[i] + rchisq(1, 2, ncp = 0)
+        U_vector[i] <- U_vector[i] + stats::rchisq(1, 2, ncp = 0)
     }
   }
   beta_x <- as.vector(beta %*% t(cov_beta))
@@ -70,12 +70,12 @@ sim_frailty_cl <- function(N, theta = c(-1,1,0),
     }
     else {
       L[i] <- 0
-      add <- runif(1, 0.1, 0.5)
+      add <- stats::runif(1, 0.1, 0.5)
       R[i] <- add
       check <- (L[i] <= Z[i] & Z[i] < R[i])
       while(!check) {
         L[i] <- L[i] + add
-        add <- runif(1, 0.1, 0.5)
+        add <- stats::runif(1, 0.1, 0.5)
         R[i] <- R[i] + add
         check <- (L[i] <= Z[i] & Z[i] < R[i])
       }

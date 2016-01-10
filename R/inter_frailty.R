@@ -96,7 +96,7 @@ gera_yh <- function(data_set, l_vector, r_vector, delta,
   intercept <- 1
   x_theta <- data.frame(data_set[,cov_theta])
   x_beta <- data.frame(data_set[,cov_beta])
-  u_h <- runif(tam)
+  u_h <- stats::runif(tam)
   for (i in 1:tam) {
     if ( (delta[i] == 0) | (l_vector[i] == r_vector[i]) ){
       new_y[i] <- l_vector[i]
@@ -120,7 +120,7 @@ gera_kh <- function(y_h, data_set, delta,
   xi_1 <- data_set[,cov_beta]
   num <- exp(as.vector(theta %*% t(xi_0)))
   den <- 2 + 4 * sapply(y_h, nelson_aalen_f) * exp(as.vector(beta %*% t(xi_1)))
-  k_h <- rpois(length(num), num / den) + delta
+  k_h <- stats::rpois(length(num), num / den) + delta
   return(k_h)
 }
 
@@ -134,7 +134,7 @@ gera_uh <- function(y_h, k_h, data_set, r_vector, delta,
   beta_gamma <- 1 / (0.5 + sapply(y_h, nelson_aalen_f) *
                        exp(as.vector(beta %*% t(xi_1))))
   cond_u <- (k_h == 0 | y_h > r_estrela)
-  u_h <- ifelse(cond_u, 0, rgamma(length(alpha_gamma),
+  u_h <- ifelse(cond_u, 0, stats::rgamma(length(alpha_gamma),
                                   alpha_gamma, scale=beta_gamma))
   return(u_h)
 }
@@ -289,7 +289,7 @@ inter_frailty <- function(dataset, left, right, delta,
         expression_theta <- paste("dataset$", cov_theta[1:length(cov_theta)],
                                   sep = "", collapse="+")
         formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
-        fit_theta <- glm(formula_theta, family = poisson)
+        fit_theta <- stats::glm(formula_theta, family = poisson)
 
         # Cox Regression for Beta
         expression_beta <- paste("dataset$", cov_beta[1:length(cov_beta)] ,
@@ -325,7 +325,7 @@ inter_frailty <- function(dataset, left, right, delta,
         expression_theta <- paste("dataset$", cov_theta[1:length(cov_theta)],
                                   sep = "", collapse="+")
         formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
-        fit_theta <- glm(formula_theta, family = poisson)
+        fit_theta <- stats::glm(formula_theta, family = poisson)
 
         # Cox Regression for Beta
         expression_beta <- paste("dataset$", cov_beta[1:length(cov_beta)] ,
@@ -411,7 +411,7 @@ inter_frailty <- function(dataset, left, right, delta,
       write(paste("IT",n + 1,":\t",
                   paste0(alpha, collapse="\t")),
             file=fileconn, append=T, sep="")
-      write.table(cov_matrix, file=var_file_name,
+      utils::write.table(cov_matrix, file=var_file_name,
                   row.names=FALSE, col.names=FALSE)
     }
 

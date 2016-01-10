@@ -15,7 +15,7 @@ gera_ksih_effect <- function(y_h, data_set, delta, cov_theta, cov_beta,
                         (sapply(y_h[grp == unique(grp)[i]],
                                 nelson_aalen_function)) + 1)))
   }
-  rgamma(m, a_h, b_h)
+  stats::rgamma(m, a_h, b_h)
 }
 
 # Generates a vector of n latent variables k
@@ -30,13 +30,13 @@ gera_kh_effect <- function(y_h, ksi_h, data_set, delta,
   num <- exp(as.vector(theta %*% t (xi_0))) * ksi_ij
   den <- 2 + 4 * sapply(y_h, nelson_aalen_function) *
     exp(as.vector(beta %*% t(xi_1)))
-  k_h <- rpois(length(num), num / den) + delta
+  k_h <- stats::rpois(length(num), num / den) + delta
   return(list(k = k_h, ksi = ksi_ij))
 }
 
 # Log-likelihood of gamma
 log_vero_gamma <- function(gamma_par, ksi_h){
-  logvero <- sum((dgamma(ksi_h,
+  logvero <- sum((stats::dgamma(ksi_h,
                          shape=exp(gamma_par),
                          rate=exp(gamma_par),
                          log=TRUE)))
@@ -181,7 +181,7 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
         if (l_cl_i[j] == r_cl_i[j]) {
           times_cl_i[j] <- l_cl_i[j]
         } else {
-          u_var <- runif(1)
+          u_var <- stats::runif(1)
 
           times_cl_i[j] <- gera_y_cl(u_var, l_cl_i[j], r_cl_i[j],
                                      i, j,
@@ -369,7 +369,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                   cov_theta[1:length(cov_theta)] ,
                                   sep = "", collapse="+")
         formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
-        fit_theta <- glm(formula_theta, family = poisson)
+        fit_theta <- stats::glm(formula_theta, family = poisson)
 
         #Cox Regression for Beta
         expression_beta <- paste("dataset$",
@@ -430,7 +430,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                   sep = "",
                                   collapse="+")
         formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
-        fit_theta <- glm(formula_theta, family = poisson)
+        fit_theta <- stats::glm(formula_theta, family = poisson)
 
 
 
@@ -527,7 +527,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
       write(paste("IT",n + 1,":\t",
                   paste0(alpha, collapse="\t")),
             file=fileconn, append=T, sep="")
-      write.table(cov_matrix, file=var_file_name,
+      utils::write.table(cov_matrix, file=var_file_name,
                   row.names=FALSE, col.names=FALSE)
     }
 

@@ -3,7 +3,7 @@ inmost2 <- function(data, eps = 1e-04){
   lr <- data.frame(data)
   names(lr) <- c("l", "r")
   lr$l <- lr$l * (1 + eps)
-  lr.stk <- stack(lr, select = c("l", "r"))
+  lr.stk <- utils::stack(lr, select = c("l", "r"))
   lr.order <- lr.stk[order(lr.stk[, 1]), ]
   n <- length(lr.order[, 1])
   lr1 <- data.frame(lr.order[-n, 1],
@@ -319,12 +319,12 @@ inter_bch <- function(dataset, left, right,
 
     # Obtaining theta and it's variance with MLE
     llk <- function(theta) log_lik(theta,p,dataset,Xk,C,cov,F_hat, m)
-    fit_theta <- optim(theta_k, llk, method = "BFGS",
+    fit_theta <- stats::optim(theta_k, llk, method = "BFGS",
                        control = list(fnscale = -1), hessian = T)
     theta_knew <- fit_theta$par
     theta_var <- solve(-fit_theta$hessian)
     if(output_files) {
-      write.table(theta_var, file=var_file_name,
+      utils::write.table(theta_var, file=var_file_name,
                   row.names=FALSE, col.names=FALSE)
     }
 
