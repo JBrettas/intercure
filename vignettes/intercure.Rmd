@@ -70,7 +70,7 @@ Assuming the bounded cumulative hazard model, the populational survival function
 
 $$S(t | \boldsymbol{Z}) = P(T \geq t | \boldsymbol{Z}) = \exp(-e^{\alpha + \boldsymbol{\beta}'\boldsymbol(Z)}F^{*}(t))$$
 
-where $F^{*}(t)$ is a completely unknown regular cumulative distribution function, $\boldsymbol{Z}$ is the covariate vector, $\alpha$ is the intercept to be estimated and $\boldsymbol{\beta}$ is the vector of effects associated to $\boldsymbol{Z}$. Taking the limit of the expression above gives $\exp(-e^{\alpha + \boldsymbol{\beta}'\boldsymbol(Z)})$, the probability of being cured.
+where $F^{*}(t)$ is a completely unknown regular distribution function, $\boldsymbol{Z}$ is the covariate vector, $\alpha$ is the intercept to be estimated and $\boldsymbol{\beta}$ is the vector of effects associated to $\boldsymbol{Z}$. Taking the limit of the expression above gives $\exp(-e^{\alpha + \boldsymbol{\beta}'\boldsymbol(Z)})$, the probability of being cured.
 
 In this specification, $F^{*}(t)$ is related to the promotion time of each of the $N$ tumorous cells, as well known in literature for this motivation. For interval censored data, the proposed semiparametric model uses the non-parametric Turnbull estimator for this component, restricting the search of the distribution function estimate to an equivalence class.
 
