@@ -326,8 +326,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
 
   #Iterative process (with parallel computing)
   while(!conv | n <= burn_in) {
-    #if ( (n + 1) %% 10 == 0 )
-      cat("############################################################## Iteration:", (n + 1),"\n")
+    if ( (n + 1) %% 10 == 0 ) cat("Iteration:", (n + 1),"\n")
     #iter_time <- system.time({
     if(!is.null(par_cl)){
       list_reg <- foreach::foreach(iterators::icount(M),
@@ -518,7 +517,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
 
     #Setting new alpha as old one for iteractive process
     alpha <- alpha_new
-    cat("\n alpha:", alpha)
+    #cat("\n alpha:", alpha)
     #})
     #print(iter_time)
 
