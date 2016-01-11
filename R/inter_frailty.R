@@ -43,12 +43,12 @@ nelson_aalen_table <- function(data_set,
 aux_naalen <- function(tempos, naalen_f, par_cl = NULL) {
   z <- unique(sort(tempos))
   if (!is.null(par_cl)) {
-    if (!requireNamespace("snow", quietly = TRUE)) {
-      stop("The snow package is needed for parallel version
+    if (!requireNamespace("parallel", quietly = TRUE)) {
+      stop("The parallel package is needed for parallel version
            of inter_frailty or inter_frailty_cl. Please install it.",
            call. = FALSE)
     }
-    vector_naalen <- snow::parSapply(par_cl, z, naalen_f)
+    vector_naalen <- parallel::parSapply(par_cl, z, naalen_f)
   } else {
     vector_naalen <- sapply(z, naalen_f)
   }

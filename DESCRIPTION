@@ -20,13 +20,13 @@ Imports:
     MASS,
     stats4,
     Matrix,
-    iterators
+    iterators,
+    parallel
 Suggests: 
     testthat,
     knitr,
     rmarkdown,
-    doSNOW,
-    snow
+    doParallel
 Depends: R (>= 2.10)
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr

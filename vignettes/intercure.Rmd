@@ -202,6 +202,8 @@ output <- inter_frailty(cureset,
                         cureset$L, cureset$R, cureset$delta, 
                         c("xi1", "xi2"), c("xi1", "xi2"),
                         M = 10, max_n = 30, burn_in = 10)
+
+
 ```
 
 The estimated parameters are:
@@ -221,15 +223,20 @@ cf
 
 In other words, based on the frailty model, an individual with $X_1 = 1$ and $X_2 = 0$ have `r cf` of probability of being cured.
 
-Using an registered parallel backend, this algorithm can be set to run in parallel using the `par_cl` parameter, improving the speed of the estimation. The user can use the packages `doSNOW` and `snow`, for example, to register the cluster of cores. The same estimation proccess shown before can then be executed as it follows:
+Using an registered parallel backend, this algorithm can be set to run in parallel using the `par_cl` parameter, improving the speed of the estimation. The user can use the package `parallel`, for example, to register the cluster of cores. The same estimation proccess shown before can then be executed as it follows:
 
 ```{r, eval = FALSE}
-cl <- makeCluster(2, type="SOCK")
-registerDoSNOW(cl)
+require(parallel)
+require(doParallel)
+cl <- makeCluster(4)
+registerDoParallel(cl)
 output <- inter_frailty(cureset, 
                         cureset$L, cureset$R, cureset$delta, 
                         c("xi1", "xi2"), c("xi1", "xi2"),
                         M = 10, par_cl = cl)
+  
+
+
 stopCluster(cl)
 ```
 
