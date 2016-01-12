@@ -248,10 +248,21 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 #'   0 when convergence is reached.}
 #' @examples
 #' set.seed(3)
-#' sample_set <- sim_frailty_cl(100, nclus = 3)
+#' sample_set <- sim_frailty_cl(80, nclus = 3)
+#'
+#' ## few iterations just to check how to use the function
+#'
+#' inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta,
+#' c("xi1"), c("xi1"), grp = sample_set$clus, M = 20,
+#' max_n = 2, burn_in = 0)
+#'
+#' ## precise estimate (computationally intensive)
+#' \dontrun{
+#'
 #' inter_frailty_cl(sample_set, sample_set$L, sample_set$R, sample_set$delta,
 #' c("xi1", "xi2"), c("xi1", "xi2"), grp = sample_set$clus, M = 20,
 #' max_n = 30, burn_in = 10)
+#' }
 #' @export
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
@@ -368,7 +379,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                   cov_theta[1:length(cov_theta)] ,
                                   sep = "", collapse="+")
         formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
-        fit_theta <- stats::glm(formula_theta, family = poisson)
+        fit_theta <- stats::glm(formula_theta, family = stats::poisson)
 
         #Cox Regression for Beta
         expression_beta <- paste("dataset$",
@@ -378,9 +389,9 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
         fit_beta <- survival::coxph(formula_beta, method = 'breslow')
 
         #Outputs of Parallel Computing
-        out <- list(fit_theta$coef, vcov(fit_theta),
-                    fit_beta$coef, vcov(fit_beta),
-                    coef(fit_gamma)[1], vcov(fit_gamma),
+        out <- list(fit_theta$coef, stats::vcov(fit_theta),
+                    fit_beta$coef, stats::vcov(fit_beta),
+                    stats4::coef(fit_gamma)[1], stats4::vcov(fit_gamma),
                     y, u, k, ksi_geral)
         out
       }
@@ -429,7 +440,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                   sep = "",
                                   collapse="+")
         formula_theta <- stats::formula(paste0("k~",expression_theta,"+offset(o_set)"))
-        fit_theta <- stats::glm(formula_theta, family = poisson)
+        fit_theta <- stats::glm(formula_theta, family = stats::poisson)
 
 
 
@@ -442,8 +453,8 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
         fit_beta <- survival::coxph(formula_beta, method = 'breslow')
 
         #Outputs of Parallel Computing
-        out <- list(fit_theta$coef, vcov(fit_theta), fit_beta$coef,
-                    vcov(fit_beta), coef(fit_gamma)[1], vcov(fit_gamma),
+        out <- list(fit_theta$coef, stats::vcov(fit_theta), fit_beta$coef,
+                    stats::vcov(fit_beta), stats4::coef(fit_gamma)[1], stats4::vcov(fit_gamma),
                     y, u, k, ksi_geral)
         out
       }
