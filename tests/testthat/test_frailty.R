@@ -6,22 +6,16 @@ delta2 <- data_test$delta + 1
 
 # one covariate
 fit <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi1"), M = 10, max_n = 5, burn_in = 0))
-fitx2 <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi2"), c("xi2"), M = 10, max_n = 5, burn_in = 0))
 test_that("just one covariate works on inter_frailty", {
   expect_is(fit$par,"numeric")
   expect_is(fit$stop_c,"numeric")
-  expect_is(fitx2$par,"numeric")
-  expect_is(fitx2$stop_c,"numeric")
 })
 
 # different covariate for each predictor
 fit <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi2"), M = 10, max_n = 5, burn_in = 0))
-fitx2 <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi2"), c("xi1"), M = 10, max_n = 5, burn_in = 0))
 test_that("program works for different covariates for each predictor", {
   expect_is(fit$par,"numeric")
   expect_is(fit$stop_c,"numeric")
-  expect_is(fitx2$par,"numeric")
-  expect_is(fitx2$stop_c,"numeric")
 })
 
 # parallelism
@@ -43,9 +37,9 @@ test_that("M = 1 gives error", {
 })
 
 # M = 250 works
-test_that("works for M = 250", {
-  expect_is(suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi1"), M = 250, max_n = 5, burn_in = 0))$par, "numeric")
-})
+# test_that("works for M = 250", {
+#   expect_is(suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi1"), M = 250, max_n = 5, burn_in = 0))$par, "numeric")
+# })
 
 # stops on non 0 or 1 delta
 test_that("throws error if delta is not binary", {

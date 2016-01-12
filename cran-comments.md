@@ -1,3 +1,11 @@
+## Resubmission
+This is a resubmission. In this version I have:
+
+* Used parallel and doParallel instead of snow and doSNOW
+* Controlled the NAMESPACE using stats4::vcov and stats4::coef
+* Reduced the examples runtime
+* Removed some unnecessary unit tests
+
 ## Test environments
 * local windows 8.1 pro, R 3.2.2
 * ubuntu 12.04 (on travis-ci), R 3.2.3

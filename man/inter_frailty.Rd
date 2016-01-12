@@ -58,10 +58,18 @@ dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if a
 stop criteria ended the process.
 }
 \examples{
-sample_set <- sim_frailty(100)
+## few iterations just to check how to use the function
+set.seed(3)
+sample_set <- sim_frailty(80)
+
 inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-c("xi1","xi2"), c("xi1","xi2"), M = 10, max_n = 30, burn_in = 20)
+c("xi1","xi2"), c("xi1","xi2"), M = 10, max_n = 3, burn_in = 0)
+
+## precise estimate (computationally intensive)
+\dontrun{
+
 inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-c("xi1"), c("xi2"), M = 20, max_n = 40, burn_in = 10)
+c("xi1"), c("xi2"), M = 50, max_n = 50, burn_in = 10)
+}
 }
 

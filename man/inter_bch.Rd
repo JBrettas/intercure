@@ -46,8 +46,18 @@ dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if a
 stop criteria ended the process.
 }
 \examples{
-sample_set <- sim_bch(100)
+set.seed(3)
+sample_set <- sim_bch(80)
+
+## few iterations just to check how to use the function
+
+inter_bch(sample_set, sample_set$L,
+sample_set$R, c("xi1","xi2"), max_n = 5)
+
+## precise estimate (computationally intensive)
+\dontrun{
+
 inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1","xi2"))
-inter_bch(sample_set, sample_set$L, sample_set$R, c("xi1"))
+}
 }
 
