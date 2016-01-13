@@ -14,10 +14,10 @@ references:
 - id: shen2009
   title: A Semiparametric Regression Cure Model for Interval-Censored Data
   author:
+  - family: Liu
+    given: Hao
   - family: Shen
     given: Yu
-  - family: Hao
-    given: Liu
   container-title: Journal of the American Statistical Association
   volume: 104
   issue: 487

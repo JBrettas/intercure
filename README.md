@@ -6,7 +6,7 @@ intercure
 
 The intercure package provides R implementations for different cure rate models to interval censored data. The goal is to estimate the effects of each given covariate using different specifications and computing the estimated cure fraction with it. For simulation and illustrative examples, the package also provides functions to generate a dataset using one of the cure rate specification.
 
-Two models for interval censored data are considered on this package: the bounded cumulative hazard model proposed on Shen and Hao (2009); the frailty model proposed on Lam, Wong, and Zhou (2013), with its extension to clustered data presented on Lam and Wong (2014).
+Two models for interval censored data are considered on this package: the bounded cumulative hazard model proposed on Liu and Shen (2009); the frailty model proposed on Lam, Wong, and Zhou (2013), with its extension to clustered data presented on Lam and Wong (2014).
 
 Installing
 ----------
@@ -47,4 +47,4 @@ Lam, Kwok Fai, and Kin Yau Wong. 2014. “Semiparametric Analysis of Clustered I
 
 Lam, Kwok Fai, Kin Yau Wong, and Feifei Zhou. 2013. “A Semiparametric Cure Model for Interval-Censored Data.” *Biometrical Journal* 55 (5): 771–88.
 
-Shen, Yu, and Liu Hao. 2009. “A Semiparametric Regression Cure Model for Interval-Censored Data.” *Journal of the American Statistical Association* 104 (487): 1168–78.
+Liu, Hao, and Yu Shen. 2009. “A Semiparametric Regression Cure Model for Interval-Censored Data.” *Journal of the American Statistical Association* 104 (487): 1168–78.
