@@ -97,23 +97,19 @@ log_lik <- function(theta = (1:(1 + length(covariates))) * 0,
 #####################################################################################################################
 
 # First order derivative for p
-d_fp <- function(p, theta, Xk, C, Z, m){
-  b_kp1 <- exp(theta %*% t(Z))
+d_fp <- function(p, theta, Xk_1, C_1, m, b_kp1){
   dfp <- b_kp1 %*%
-    ((Xk[][,1:m] / (exp(t(b_kp1 %x% p)) - 1))
-     - C[][,1:m])
+    ((Xk_1 / (exp(t(b_kp1 %x% p)) - 1))
+     - C_1)
   return(dfp)
 }
 
 # Second order derivative for p
-dd_fp <- function(p, theta, Xk, C, Z, m){
-  b_kp1 <- exp(theta %*% t(Z))
-  ddfp <- p * 0
-  for(i in 1:nrow(Xk)){
-    ddfp <- ddfp - (Xk[][i,1:m] * exp(2 * theta %*% t(Z[i,])) *
-                   exp(b_kp1[i] * p)) / ((exp(b_kp1[i] * p) - 1) *
-                                           (exp(b_kp1[i] * p) - 1))
-  }
+dd_fp <- function(p, theta, Xk_1, C, Z, m, b_kp1){
+  aux_mid <- as.numeric(exp(2*(as.numeric(theta) %*% t(Z))))
+  aux_right <- exp(as.numeric(b_kp1) %x% t(p))
+  aux_big <- (aux_mid * aux_right) /  (aux_right - 1) ^ 2
+  ddfp <- -diag(t(Xk_1) %*% aux_big)
   return(ddfp)
 }
 
@@ -135,8 +131,8 @@ delta_p <- function(p, tau = (1 / p), v_plus, dfp, ddfp, sigma){
 norm_vec <- function(x) sqrt(sum(x * x))
 
 # Proposed function to evaluate p's convergence
-Fn <- function(p, tau, v, theta, Xk, C, eta, m, Z){
-  dfp <- d_fp(p,theta,Xk[],C[],Z, m)
+Fn <- function(p, tau, v, theta, Xk_1, C_1, eta, m, b_kp1){
+  dfp <- d_fp(p,theta,Xk_1,C_1, m, b_kp1)
   v1 <- dfp + tau - v
   v2 <- (diag(tau) %*% p) - (1 / eta)
   v3 <- 1 - sum(p)
@@ -146,7 +142,7 @@ Fn <- function(p, tau, v, theta, Xk, C, eta, m, Z){
 # Backtracking for p maximizing
 backtracking <- function(p, delta_p, tau,
                          delta_tau, v, delta_v,
-                         theta, Xk, C, sigma, m, Z){
+                         theta, Xk_1, C_1, sigma, m, Z, b_kp1){
   # Defining eta
   eta <- sigma / mean(tau * p)
   pi <- 0.01
@@ -157,15 +153,15 @@ backtracking <- function(p, delta_p, tau,
   while((norm_vec(Fn(as.vector(p + psi * delta_p),
                      as.vector(tau + psi * delta_tau),
                      as.vector(v + psi * delta_v),
-                     theta, as.matrix(Xk[]),
-                     as.matrix(C[]), eta, m, Z))) >
+                     theta, Xk_1,
+                     C_1, eta, m, b_kp1))) >
         ( (1 - pi * psi) * norm_vec(Fn(p,
                                        tau,
                                        v,
                                        theta,
-                                       as.matrix(Xk[]),
-                                       as.matrix(C[]),
-                                       eta, m, Z)))) {
+                                       Xk_1,
+                                       C_1,
+                                       eta, m, b_kp1)))) {
     psi <- psi * rho
   }
   return(psi)
@@ -179,11 +175,16 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
   CRIT1 <- FALSE
   CRIT2 <- FALSE
   it <- 1
+  Xk_p1 <- as.matrix(Xk[][,1:m])
+  C_p1 <- as.matrix(C[][,1:m])
+  b_kp1 <- exp(theta %*% t(Z))
 
   # First and Second order derivatives
-  dfp <- d_fp(p, theta, Xk, C, Z, m)
-  ddfp <- dd_fp(p, theta, Xk, C, Z, m)
-
+  dfp <- d_fp(p, theta, Xk_p1, C_p1, m, b_kp1)
+  dd_time <- proc.time()
+  ddfp <- dd_fp(p, theta, Xk_p1, C, Z, m, b_kp1)
+  dd_time <- proc.time() - dd_time
+  cat("\n Segunda derivada demorou:", dd_time)
   # Defining initial tau
   ini_tau <- 1 / p
   tau <- ini_tau
@@ -208,17 +209,21 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
     # Backtracking
     psi <- backtracking(p, delp, tau,
                         deltau, v, delv, theta,
-                        Xk, C, sigma, m, Z)
+                        Xk_p1, C_p1, sigma, m, Z, b_kp1)
     p <- as.vector(p + psi * delp)
     tau <- as.vector(tau + psi * deltau)
     v <- as.vector(v + psi * delv)
-    dfp <- d_fp(p, theta, Xk, C, Z, m)
-    ddfp <- dd_fp(p, theta, Xk, C, Z, m)
+    dfp <- d_fp(p, theta, Xk_p1, C_p1, m, b_kp1)
+
+    dd_time <- proc.time()
+    ddfp <- dd_fp(p, theta, Xk_p1, C, Z, m, b_kp1)
+    dd_time <- proc.time() - dd_time
+    cat("\n Segunda derivada demorou:", dd_time)
 
     # Updating convergence parameters
     CRIT1 <- (sum(p * tau) < eps2)
     CRIT2 <- (sqrt(sum( (dfp + tau - v) *
-                       (dfp + tau - v))) < eps2)
+                          (dfp + tau - v))) < eps2)
     it <- it + 1
   }
   return(p)
@@ -370,8 +375,11 @@ inter_bch <- function(dataset, left, right,
                      left, right, cov, F_hat, inmost_list)
 
     # Computing p vector for new Xk and theta
+    p_time <- proc.time()
     novo_p <- max_p(p, theta_knew, Xk,
                     sigma = sigma, inmost_list = inmost_list, Z = Z)
+    p_time <- proc.time() - p_time
+    cat("\nVetor p demorou:", p_time)
 
     # Checking p convergence
     CONV2 <- (max(abs(novo_p - p)) < crit_p)
