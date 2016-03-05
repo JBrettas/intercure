@@ -79,16 +79,14 @@ compute_C <- function(Xk, inmost_list){
 
 # Expected log-likelihood
 log_lik <- function(theta = (1:(1 + length(covariates))) * 0,
-                  vector_prob,
-                  dados, Xk, C,
-                  covariates, F_hat, m){
-  Z <- data.frame(1, dados[,covariates])
-  colnames(Z) <- c("intercept", covariates)
-  l <- as.numeric(exp(theta %*% t(Z)))
-  soma_1 <- as.numeric(-t(l) %*% (C[][,1:m] %*% vector_prob[1:m]))
+                    vector_prob,
+                    dados, Xk_1, C,
+                    covariates, F_hat, m, t_Z, Maux, Xk_2){
+  l <- as.numeric(exp(theta %*% t_Z))
+  soma_1 <- as.numeric(-t(l) %*% Maux)
   soma_2 <- sum((Matrix::diag(log(1 - exp(-vector_prob %*% t(l)))
-                      %*% (Xk[,1:m]))))
-  soma_3 <- as.numeric(-Xk[, (m + 1)] %*% l)
+                              %*% (Xk_1))))
+  soma_3 <- as.numeric(-Xk_2 %*% l)
   soma_lvero <- as.numeric(soma_1 + soma_2 + soma_3)
   return(soma_lvero)
 }
@@ -332,7 +330,14 @@ inter_bch <- function(dataset, left, right,
     C <- compute_C(Xk, inmost_list)
 
     # Obtaining theta and it's variance with MLE
-    llk <- function(theta) log_lik(theta,p,dataset,Xk,C,cov,F_hat, m)
+    Z <- data.frame(1, dataset[,cov])
+    colnames(Z) <- c("intercept", cov)
+    t_Z <- t(Z)
+    Maux <- as.matrix(C[][,1:m] %*% p[1:m])
+    Xk_p1 <- as.matrix(Xk[,1:m])
+    Xk_p2 <- Xk[, (m + 1)]
+
+    llk <- function(theta) log_lik(theta,p,dataset,Xk_p1,C,cov,F_hat, m, t_Z, Maux, Xk_p2)
     fit_theta <- stats::optim(theta_k, llk, method = "BFGS",
                        control = list(fnscale = -1), hessian = T)
     cur_lh <- fit_theta$value
