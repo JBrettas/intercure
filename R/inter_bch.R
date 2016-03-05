@@ -271,6 +271,7 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
 inter_bch <- function(dataset, left, right,
                       cov, sigma = 10,
                       crit_theta = 0.001, crit_p=0.005,
+                      crit_lh = 0.3,
                       max_n = 100, output_files = FALSE){
   # Initializing output files
   if (output_files) {
@@ -314,14 +315,17 @@ inter_bch <- function(dataset, left, right,
   theta_k <- c(1:ncol(Z)) * 0
 
   # Convergence flags
-  CONV <- FALSE
+  CONV  <- FALSE
   CONV2 <- FALSE
+  CONV3 <- FALSE
 
   # Iteration counter
   it <- 1
+  prev_lh <- 9999.0
+  theta_var <- 9999.0
 
   # ECM Loop
-  while(!CONV | !CONV2){
+  while(!CONV | !CONV2 | !CONV3){
     # Computing matrix X and C
     if ( (it) %% 10 == 0 ) cat("Iteration:", (it))
     Xk <- compute_Xk(theta_k, p, dataset, left, right, cov, F_hat, inmost_list)
@@ -331,17 +335,30 @@ inter_bch <- function(dataset, left, right,
     llk <- function(theta) log_lik(theta,p,dataset,Xk,C,cov,F_hat, m)
     fit_theta <- stats::optim(theta_k, llk, method = "BFGS",
                        control = list(fnscale = -1), hessian = T)
+    cur_lh <- fit_theta$value
     theta_knew <- fit_theta$par
+    theta_var2 <- theta_var
     theta_var <- solve(-fit_theta$hessian)
+
     if(output_files) {
       utils::write.table(theta_var, file=var_file_name,
                   row.names=FALSE, col.names=FALSE)
     }
 
+    # Expected-likelihood convergence
+    CONV3 <- abs(cur_lh - prev_lh) < crit_lh
+    cat("\nPrevious expected log-likelihood:", prev_lh)
+    cat("\nCurrent expected log-likelihood:", cur_lh)
+    prev_lh <- cur_lh
+
+
     # Checking theta convergence
     CONV <- (max(abs(theta_knew - theta_k)) < crit_theta)
+    cat("\nTheta Max Difference:",max(abs(theta_knew - theta_k)))
+    cat("\nNOVO THETA:", theta_knew)
     if ( (it) %% 10 == 0 )
       cat("\nTheta Max Difference:",max(abs(theta_knew - theta_k)))
+      cat("\nTheta DP:", sqrt(diag(theta_var)))
 
     # Updating Xk for new theta
     Xk <- compute_Xk(theta_knew, p, dataset,
@@ -353,6 +370,7 @@ inter_bch <- function(dataset, left, right,
 
     # Checking p convergence
     CONV2 <- (max(abs(novo_p - p)) < crit_p)
+    cat("\np Max Difference:", max(abs(novo_p - p)), "\n\n")
     if ( (it) %% 10 == 0 )
       cat("\np Max Difference:", max(abs(novo_p - p)), "\n\n")
 
@@ -360,6 +378,7 @@ inter_bch <- function(dataset, left, right,
     p <- novo_p
     F_hat_aux <- data.frame(r[1:m],cumsum(p))
     colnames(F_hat_aux) <- c("time","cum")
+    PARA_CURVAS_SHEN <<- F_hat_aux
     F_hat <- stats::stepfun(F_hat_aux$time,c(0,F_hat_aux$cum))
     theta_k <- theta_knew
 
