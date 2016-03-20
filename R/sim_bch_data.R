@@ -28,7 +28,7 @@ sim_bch <- function(N, theta = c(1, 0.5, 0),
   X <- data.frame(intercept, xi1, xi2)
   lambda_pois <- as.numeric(exp(theta %*% t(X)))
   N_L <- stats::rpois(N, lambda_pois)
-  a <- stats::runif(N)
+  a <- stats::rexp(N)
   C <- cbind(A,a * B)
   C <- C[,1] * (C[,1] <= C[,2]) + C[,2] * (C[,1] > C[,2])
   T <- c(1:N) * NA

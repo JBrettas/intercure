@@ -29,7 +29,7 @@ sim_frailty_cl <- function(N, theta = c(-1,1,0),
                         nclus = 2,
                         w = exp(-0.5)) {
   u <- stats::runif(N)
-  a <- stats::runif(N)
+  a <- stats::rexp(N)
   C <- cbind(A, a * B)
   C <- C[,1] * (C[,1] <= C[,2]) + C[,2] * (C[,1] > C[,2])
   intercept <- 1
@@ -57,9 +57,9 @@ sim_frailty_cl <- function(N, theta = c(-1,1,0),
   }
   beta_x <- as.vector(beta %*% t(cov_beta))
   exp_pred_beta <- exp(beta_x)
-  num <- -2 * log(1 - u)
+  num <- -1 * log(1 - u)
   den <- U_vector * exp_pred_beta
-  tempos <- ifelse(U_vector != 0, sqrt(num / den), Inf)
+  tempos <- ifelse(U_vector != 0, num / den, Inf)
   Z <- ifelse(tempos < C, tempos, C)
   delta <- ifelse(tempos < C, 1, 0)
   L <- R <- Z * NA
