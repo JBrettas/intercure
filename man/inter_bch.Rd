@@ -5,7 +5,7 @@
 \title{Fits promotion time cure rate model for interval censored data}
 \usage{
 inter_bch(dataset, left, right, cov, sigma = 10, crit_theta = 0.001,
-  crit_p = 0.005, max_n = 100, output_files = FALSE)
+  crit_p = 0.005, crit_lh = 0.3, max_n = 100, output_files = FALSE)
 }
 \arguments{
 \item{dataset}{Dataset used to fit the model.}

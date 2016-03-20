@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim_frailty_data.R
 \name{sim_frailty}
 \alias{sim_frailty}
-\title{Generates a interval censored dataset using frailty cure rate model}
+\title{Generates a interval censored dataset using the frailty cure rate model}
 \usage{
 sim_frailty(N, theta = c(-1, 1, 0), beta = c(0, 0.5), A = 5, B = 15,
   prob = 0.5)
@@ -16,7 +16,7 @@ sim_frailty(N, theta = c(-1, 1, 0), beta = c(0, 0.5), A = 5, B = 15,
 
 \item{A}{A positive number representing a fixed right censoring.}
 
-\item{B}{A positive number which multiplies an uniform random variable,
+\item{B}{A positive number which multiplies an exponential random variable with mean 1,
 defining another right censoring case.}
 
 \item{prob}{Probability that individual presents treatment T1 (baseline is

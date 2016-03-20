@@ -6,7 +6,8 @@
 \usage{
 inter_frailty_cl(dataset, left, right, delta, cov_theta, cov_beta, grp, M,
   b = 0.001, tol = 0.001, max_n = 100, par_cl = NULL, burn_in = 50,
-  output_files = FALSE)
+  output_files = FALSE, input_alpha = NULL, input_sigma_alpha = NULL,
+  input_cumrisk = NULL)
 }
 \arguments{
 \item{dataset}{Dataset used to fit the model.}
