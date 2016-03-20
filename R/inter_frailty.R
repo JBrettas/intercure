@@ -394,6 +394,7 @@ inter_frailty <- function(dataset, left, right, delta,
 
     # Creating new times/survival table and a more efficient estimator
     V_NAalen <- aux_naalen(sort(y_nxm[, delta == 1]), mean_naalen, par_cl)
+    PARA_CURVAS_LAM <<- V_NAalen
     new_mean_naalen <- stats::stepfun(V_NAalen$time,
                                       c(0, V_NAalen$hazard))
 
@@ -413,7 +414,11 @@ inter_frailty <- function(dataset, left, right, delta,
 
     #Setting new alpha as old one for iteractive process
     alpha <- alpha_new
+    cat("\n Alpha: ", alpha)
 
+    temp_last_sigma <<- sigma_alpha
+    temp_sqrt_alpha <- sqrt(diag(sigma_alpha))
+    cat("\n Alpha SE: ", temp_sqrt_alpha)
     #Writing alpha values
     if (output_files) {
       write(paste("IT",n + 1,":\t",

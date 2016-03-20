@@ -267,7 +267,10 @@ gera_yh_effect2 <- function(left, right, delta, cov_theta, cov_beta,
 inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                              grp, M, b = 0.001, tol = 0.001, max_n=100,
                              par_cl = NULL,
-                             burn_in=50, output_files = FALSE) {
+                             burn_in=50, output_files = FALSE,
+                             input_alpha = NULL,
+                             input_sigma_alpha = NULL,
+                             input_cumrisk = NULL) {
   # arranges dataset by clusters
   order_aux <- order(grp)
   dataset <- as.data.frame(dataset[order_aux,])
@@ -330,6 +333,10 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
   naalen_avg <- stats::stepfun(Vetores_NAalen$time,
                                c(0, Vetores_NAalen$hazard))
 
+  if(!is.null(input_cumrisk)) naalen_avg <- input_cumrisk
+  if(!is.null(input_sigma_alpha)) sigma_alpha <- input_sigma_alpha
+  if(!is.null(input_alpha)) alpha <- input_alpha
+
   #Initializing convergence criteria and parameters
   conv <- FALSE
   n <- 0
@@ -337,6 +344,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
 
   #Iterative process (with parallel computing)
   while(!conv | n <= burn_in) {
+    cat("Iteration:", (n + 1),"\n")
     if ( (n + 1) %% 10 == 0 ) cat("Iteration:", (n + 1),"\n")
     #iter_time <- system.time({
     if(!is.null(par_cl)){
@@ -518,6 +526,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
                                     sum_var_gamma)))
     cov_matrix <- var_matrix(SUM_VAR, a_M_NEW)
     sigma_alpha <- cov_matrix
+    sigma_alpha_glob <<- sigma_alpha
 
     #New vector of estimates
     alpha_new <- Matrix::colMeans(a_M_NEW)
@@ -528,7 +537,9 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
 
     #Setting new alpha as old one for iteractive process
     alpha <- alpha_new
-    #cat("\n alpha:", alpha)
+    alpha0_glob <<- alpha
+    cat("\n alpha:", alpha)
+    cat("\n alpha SE:", sqrt(diag(sigma_alpha)))
     #})
     #print(iter_time)
 
@@ -544,6 +555,7 @@ inter_frailty_cl <- function(dataset, left, right, delta, cov_theta, cov_beta,
     # Setting new baseline cum. hazard estimator as
     # old one for iteractive process
     naalen_avg <- naalen_avg_new
+    naalen_avg_glob <<- naalen_avg
 
     #Updating the iteration counter
     n <- n + 1

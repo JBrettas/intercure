@@ -181,10 +181,10 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
 
   # First and Second order derivatives
   dfp <- d_fp(p, theta, Xk_p1, C_p1, m, b_kp1)
-  dd_time <- proc.time()
+  #dd_time <- proc.time()
   ddfp <- dd_fp(p, theta, Xk_p1, C, Z, m, b_kp1)
-  dd_time <- proc.time() - dd_time
-  cat("\n Segunda derivada demorou:", dd_time)
+  #dd_time <- proc.time() - dd_time
+  #cat("\n Segunda derivada demorou:", dd_time)
   # Defining initial tau
   ini_tau <- 1 / p
   tau <- ini_tau
@@ -215,10 +215,10 @@ max_p <- function(p, theta, Xk, eps2=0.001, MAXITER=500, sigma, inmost_list, Z){
     v <- as.vector(v + psi * delv)
     dfp <- d_fp(p, theta, Xk_p1, C_p1, m, b_kp1)
 
-    dd_time <- proc.time()
+    #dd_time <- proc.time()
     ddfp <- dd_fp(p, theta, Xk_p1, C, Z, m, b_kp1)
-    dd_time <- proc.time() - dd_time
-    cat("\n Segunda derivada demorou:", dd_time)
+    #dd_time <- proc.time() - dd_time
+    #cat("\n Segunda derivada demorou:", dd_time)
 
     # Updating convergence parameters
     CRIT1 <- (sum(p * tau) < eps2)
