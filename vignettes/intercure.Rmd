@@ -242,9 +242,9 @@ stopCluster(cl)
 
 ## Frailty model to clustered data
 
-The frailty model have an natural extension for clustered data, presented on @lam2014. The theorical details of this extension, despite its simplicity, are not shown here and can be seen on the original paper, as recommended. The function `inter_frailty_cl` presents the same syntax as the non-clustered data version with exception of a new parameter, `grp`, which should contain a vector of groups ids. A different function was implemented having in mind the differences on the estimation proccess. It can be shown that, for a fixed cluster effect $\Xi_i = \xi_i$, the cure fraction is obtained as it follows:
+The frailty model have an natural extension for clustered data, presented on @lam2014. The theorical details of this extension, despite its simplicity, are not shown here and can be seen on the original paper, as recommended. The function `inter_frailty_cl` presents the same syntax as the non-clustered data version with exception of a new parameter, `grp`, which should contain a vector of groups ids. A different function was implemented having in mind the differences on the estimation proccess. From @lam2014, the cure probability for an individual $j$ from the $i$ cluster, with covariates $\boldsymbol{x}^{(0)}_{ij}$ related to the incidence, is given by $$\pi_{ij} (\boldsymbol{x}_{ij}) = \lim_{t_{ij} \rightarrow \infty}  S(t_{ij} | \boldsymbol{x}_{ij}) = \left[ \frac{\omega}{\omega + \frac{\exp (\boldsymbol{\theta}' \boldsymbol{x}^{(0)}_{ij})}{2}} \right]^{\omega},$$
 
-$$ P(\mbox{cured} | \Xi_i = \xi_i, \boldsymbol{x_i}) = P(K_i = 0 | \Xi_i = \xi_i, \boldsymbol{x_i}) = \exp( -{\xi_i \times e^{\boldsymbol{\theta}'\boldsymbol{x^{(0)}}} / 2}). $$
+with $\omega$ beign both the shape and rate parameters of a gamma distribution related to the cluster effects, as can be seen on the original paper.
 
 ### sim_frailty_cl
 
@@ -286,6 +286,18 @@ The estimated parameters are:
 output$par
 ```
 
-The output vector on `$par` have, as the non-clustered version, the effects associated with the incidence and latency of the model. One additional parameter is estimated and shown: $\log(w)$, where the group effect is obtained from $Gamma(w, w)$, as can be seen on the original paper. As the mean of the group effect is 1, the cure rate for this scenario, fixing the cluster effects as its mean, is obtained the same way as for the `inter_frailty` function previosly shown.
+The output vector on `$par` have, as the non-clustered version, the effects associated with the incidence and latency of the model. One additional parameter is estimated and shown: $\log(\omega)$, where the group effect is obtained from $Gamma(\omega, \omega)$, as can be seen on the original paper. 
+
+Then, for an individual with $\boldsymbol{x}_{ij} = (1, 1, 0)$, we have:
+
+```{r}
+indiv <- c(1, 1, 0)
+est_effect <- output$par
+cf <- (exp(output$par[6]) / (exp(output$par[6]) + 
+                               exp(est_effect[1:3]%*%indiv)/2))^(exp(output$par[6]))
+cf
+```
+
+The interpretation of the estimated cure fraction and the use of the parallel backend are analogous to the function of the frailty model without clustered data.
 
 ## References

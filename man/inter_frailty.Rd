@@ -6,7 +6,8 @@
 \usage{
 inter_frailty(dataset, left, right, delta, cov_theta, cov_beta, M, b = 0.001,
   tol = 0.001, max_n = 100, par_cl = NULL, burn_in = 30,
-  output_files = FALSE)
+  output_files = FALSE, input_alpha = NULL, input_sigma_alpha = NULL,
+  input_cumrisk = NULL)
 }
 \arguments{
 \item{dataset}{Dataset used to fit the model.}
@@ -30,8 +31,7 @@ predictor associated with the hazard function.}
 
 \item{tol}{Numeric for tolerance of convergence.}
 
-\item{max_n}{Maximum number of algorithm's iterations without the burn
-in.}
+\item{max_n}{Maximum number of algorithm's iterations without the burn in.}
 
 \item{par_cl}{Registered SOCK cluster for parallel process. If NULL (default)
 the program loops are executed sequentially.}
@@ -40,22 +40,33 @@ the program loops are executed sequentially.}
 
 \item{output_files}{Boolean indicating if text outputs for the estimates and
 variances should be generated.}
+
+\item{input_alpha}{Initial parameter vector. Default adopts 0 for each
+effect. Can be used to increase M for a same fit.}
+
+\item{input_sigma_alpha}{Initial Initial covariance matrix for alpha. Default
+is an identity matrix multiplied by \code{b}. Can be used to increase M for
+a same fit.}
+
+\item{input_cumrisk}{Initial baseline cumulative risk function. Can be used
+to increase M for a same fit.}
 }
 \value{
 The \code{inter_frailty} function returns an list containing the
-  following outputs:
-  \item{\code{par}}{estimates of theta and beta parameters.}
+  following outputs:\item{\code{n_its}}{number of iterations used on the
+  process.} \item{\code{par}}{estimates of theta and beta parameters.}
   \item{\code{mcov}}{estimates for the covariance matrix of theta and beta
-  parameters.}
+  parameters.} \item{\code{theta_max_dif}}{maximum of absolute difference
+  between the effects of the last and the previous iterations.}
   \item{\code{stop_c}}{stop criteria indicator assuming 1 when process is
   stopped for a non-convergence criteria. Assumes 0 when convergence is
-  reached.}
+  reached.} \item{\code{last_naalen}}{estimated baseline cumulative risk
+  function of the last iteration. Should be stored for fits variating M.}
 }
 \description{
-\code{inter_frailty} returns a list with the estimated parameters \code{par}
-and their asymptotic covariance matrix \code{mcov}. The list also contains a
-dummy variable \code{stop_c} assuming 0 if algorithm converged and 1 if a
-stop criteria ended the process.
+\code{inter_frailty} provides a fit using the frailty model for interval
+censored data with a cure fraction. Returns a list with the estimated
+parameters \code{par} and their asymptotic covariance matrix \code{mcov}.
 }
 \examples{
 ## few iterations just to check how to use the function
@@ -69,7 +80,7 @@ c("xi1","xi2"), c("xi1","xi2"), M = 10, max_n = 3, burn_in = 0)
 \dontrun{
 
 inter_frailty(sample_set, sample_set$L, sample_set$R, sample_set$delta,
-c("xi1"), c("xi2"), M = 50, max_n = 50, burn_in = 10)
+c("xi1"), c("xi2"), M = 50, max_n = 100, burn_in = 10)
 }
 }
 

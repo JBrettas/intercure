@@ -12,6 +12,7 @@ test_that("just one covariate works on inter_frailty", {
 })
 
 # different covariate for each predictor
+set.seed(30)
 fit <- suppressWarnings(inter_frailty(data_test, data_test$L, data_test$R, data_test$delta, c("xi1"), c("xi2"), M = 10, max_n = 5, burn_in = 0))
 test_that("program works for different covariates for each predictor", {
   expect_is(fit$par,"numeric")
@@ -64,4 +65,9 @@ test_that("stops when negative times are found", {
 # stops if L > R
 test_that("stops if L > R", {
   expect_error(suppressWarnings(inter_frailty(data_test, data_test$R, data_test$L, data_test$delta, c("ok"), c("xi1"), M = 1, max_n = 5, burn_in = 0)))
+})
+
+# expect result (safety for changes)
+test_that("results doesn't change", {
+  expect_equal(as.numeric(fit$par), c(-0.7443651,  0.9914216, -1.0999943), tolerance = 1e-5)
 })
