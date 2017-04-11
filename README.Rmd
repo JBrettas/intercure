@@ -81,7 +81,7 @@ devtools::install_github("JBrettas/intercure")
 
 To fit a cure rate model:
 
-* inter_bch
+* inter_bch ***
 * inter_frailty
 * inter_frailty_cl
 
@@ -90,6 +90,8 @@ To generate datasets:
 * sim_bch
 * sim_frailty
 * sim_frailty_cl
+
+*** NOTE: At the current version, there is a issue regarding the convergence of the expected likelihood in the `inter_bch` function. As it provides reasonable estimates of the thetas and the cure fraction, which can be checked via synthetic data, I am keeping the function available for use.
 
 ## How to use
 

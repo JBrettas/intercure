@@ -20,7 +20,7 @@ Functions
 
 To fit a cure rate model:
 
--   inter\_bch
+-   inter\_bch \*\*\*
 -   inter\_frailty
 -   inter\_frailty\_cl
 
@@ -29,6 +29,8 @@ To generate datasets:
 -   sim\_bch
 -   sim\_frailty
 -   sim\_frailty\_cl
+
+\*\*\* NOTE: At the current version, there is a issue regarding the convergence of the expected likelihood in the `inter_bch` function. As it provides reasonable estimates of the thetas and the cure fraction, which can be checked via synthetic data, I am keeping the function available for use.
 
 How to use
 ----------
